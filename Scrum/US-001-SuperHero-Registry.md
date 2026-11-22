@@ -194,14 +194,14 @@
 | T09.1 | [Refresh tokens (HttpOnly cookie, rotation and logout)](Tasks/T09.1-Refresh-Tokens.md)   | Domain, Application, Infrastructure and API | 5 h | T06, T08, T09 |
 | T10 | [Heroes API](Tasks/T10-Heroes-API.md)                                                         | API             | 5 h      | T06, T07, T09 |
 | T11 | [API cross-cutting concerns](Tasks/T11-API-Cross-Cutting.md)                                  | API             | 3 h      | T01        |
-| T12 | [Angular core: auth service, interceptor, guards and layout](Tasks/T12-Angular-Core.md)       | UI              | 6 h      | T09, T09.1 |
+| T12 | [Angular core: auth service, interceptor, guards and layout](Tasks/T12-Angular-Core.md)       | UI              | 7 h      | T09, T09.1 |
 | T13 | [Angular login and register pages](Tasks/T13-Angular-Auth-Pages.md)                           | UI              | 4 h      | T12        |
 | T14 | [Angular hero management (list, detail, form, delete)](Tasks/T14-Angular-Hero-Management.md)  | UI              | 10 h     | T10, T12   |
 | T15 | [Docker Compose delivery](Tasks/T15-Docker-Compose.md)                                        | DevOps          | 4 h      | T10, T14   |
 | T16 | [CI pipeline (GitHub Actions)](Tasks/T16-CI-Pipeline.md)                                      | DevOps          | 2 h      | T01        |
 | T17 | [Documentation, GenAI write-up and presentation](Tasks/T17-Documentation-Presentation.md)     | Docs            | 4 h      | all        |
 
-**Total estimate:** about 94 hours.
+**Total estimate:** about 95 hours.
 
 ### Suggested order
 
