@@ -1,0 +1,30 @@
+# T15: Docker Compose delivery
+
+**User story:** [US-001](../US-001-SuperHero-Registry.md) · **Layer:** DevOps (delivery) · **Estimate:** 4 h · **Depends on:** T10, T14
+
+## Goal
+Deliver the whole system so that it runs with a single `docker compose up --build`, without needing the .NET SDK or Node.js installed.
+
+## Steps
+- [ ] API `Dockerfile`:
+  - Multi-stage build: `mcr.microsoft.com/dotnet/sdk:10.0` to restore, test (optional) and publish, then `aspnet:10.0` as the runtime.
+  - Runs as a non-root user (`USER app`) on port 8080.
+- [ ] UI `Dockerfile`:
+  - Multi-stage build: `node:22-alpine` runs `npm ci` and `npm run build`, then `nginx:alpine` serves `dist/`.
+  - `nginx.conf` uses SPA fallback (`try_files $uri /index.html`) and proxies `/api` to `http://api:8080`. Because the UI and the API share the same origin, no CORS is needed.
+- [ ] `docker-compose.yml` services:
+  - `sqlserver`: `mcr.microsoft.com/mssql/server:2022-latest` with `ACCEPT_EULA`, `MSSQL_SA_PASSWORD` from `.env`, a named volume and a healthcheck using `sqlcmd`.
+  - `api`: `ConnectionStrings__HeroRegistryDb`, `Jwt__Key`, `Jwt__Issuer` and `Jwt__Audience` from `.env`. `depends_on: sqlserver (service_healthy)`. Port `5080:8080`.
+  - `ui`: `depends_on: api`. Port `8080:80`.
+- [ ] Add `.env.example` (committed) and add `.env` to `.gitignore`.
+- [ ] Add `.dockerignore` files for both images (`bin`, `obj`, `node_modules`, `.angular`).
+- [ ] The API runs the migrations and seeding on startup (T03), so no manual database step is needed.
+
+## Tests
+- [ ] Manual smoke test on a clean environment:
+  - Run `docker compose down -v && docker compose up --build`.
+  - Log in as `admin` at http://localhost:8080 and perform CRUD.
+- [ ] Optional: a CI job that runs compose and curls `/health`.
+
+## Done when
+- The stack starts from scratch with one command, the seeded data is visible, and restarting keeps the data (volume).

@@ -1,0 +1,137 @@
+## .gitignore for the HeroRegistry .NET REST API solution
+## Based on the standard Visual Studio / .NET template, trimmed and extended.
+
+# ---------------------------------------------
+# Build output
+# ---------------------------------------------
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Ll]og/
+[Ll]ogs/
+artifacts/
+publish/
+*.pubxml
+*.publishproj
+PublishScripts/
+
+# ---------------------------------------------
+# Visual Studio / Rider / VS Code
+# ---------------------------------------------
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+*.rsuser
+.idea/
+*.sln.iml
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# ---------------------------------------------
+# NuGet
+# ---------------------------------------------
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
+project.lock.json
+project.fragment.lock.json
+.nuget/
+
+# ---------------------------------------------
+# Tests & code coverage
+# ---------------------------------------------
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.trx
+*.coverage
+*.coveragexml
+coverage*.json
+coverage*.xml
+coverage*.info
+coverage/
+TestResults/
+CoverageReport/
+
+# ---------------------------------------------
+# Local databases (SQLite / LiteDB / etc.)
+# ---------------------------------------------
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.mdf
+*.ldf
+
+# ---------------------------------------------
+# Secrets & environment files (never commit)
+# ---------------------------------------------
+.env
+.env.*
+!.env.example
+appsettings.*.local.json
+appsettings.Local.json
+secrets.json
+*.pfx
+*.p12
+*.key
+
+# ---------------------------------------------
+# Misc tooling
+# ---------------------------------------------
+*.cache
+*.tmp
+*.tmp_proj
+*.log
+*.vspscc
+*.vssscc
+.builds
+*_i.c
+*_p.c
+*.pdb
+*.ilk
+*.meta
+*.obj
+*.pch
+*.pgc
+*.pgd
+*.rsp
+*.sbr
+*.tlb
+*.tli
+*.tlh
+*.vspx
+*.sap
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+.fake/
+.ionide/
+
+# ---------------------------------------------
+# OS files
+# ---------------------------------------------
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store

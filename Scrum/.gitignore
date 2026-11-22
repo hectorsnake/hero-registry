@@ -1,0 +1,6 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+# Ignore every PDF in this folder and its subfolders (case-insensitive extension)
+*.[Pp][Dd][Ff]
