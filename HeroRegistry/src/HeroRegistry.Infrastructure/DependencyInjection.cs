@@ -1,6 +1,7 @@
 using HeroRegistry.Infrastructure.Persistence;
 using HeroRegistry.Infrastructure.Persistence.Diagnostics;
 using HeroRegistry.Infrastructure.Persistence.Migrations;
+using HeroRegistry.Infrastructure.Persistence.Sql;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -40,8 +41,10 @@ public static class DependencyInjection
         services.AddSingleton<IDatabaseMigrator, DatabaseMigrator>();
         services.AddHostedService<DatabaseInitializer>();
 
-        // Connection factory, Reflection mapper, repositories (T05, T06),
-        // password hasher and token service (T08) are registered here.
+        // Reflection-based data layer (T05): connections for SqlRepository<T>.
+        services.AddSingleton<IDbConnectionFactory, SqlConnectionFactory>();
+
+        // Repositories (T06), password hasher and token service (T08) are registered here.
 
         return services;
     }

@@ -94,13 +94,24 @@ The solution follows **Clean Architecture**: dependencies point inward, and the 
 
 ### Reflection-based data layer
 
-Entity Framework, Dapper and MediatR are deliberately **not used**. Persistence is handled by a small in-house mapper:
+Entity Framework, Dapper and MediatR are deliberately **not used**. Persistence is handled by a small in-house mapper in `HeroRegistry.Infrastructure/Persistence`:
 
-- **Attributes** describe the mapping: `[Table]`, `[Key]`, `[Column]`, `[NotMapped]`, `[JsonColumn]` and `[SoftDelete]`.
-- **`EntityMetadata<T>`** reads the entity's properties once through Reflection and caches them per type.
-- **`SqlStatementBuilder`** generates **parameterized** `SELECT`, `INSERT`, `UPDATE` and soft-`DELETE` statements. Column names come only from the cached metadata and are bracket-quoted. Values are always passed as `SqlParameter`s, so there is no SQL injection surface.
-- **`DataRecordMapper`** hydrates objects from an `IDataReader`. It handles `DBNull`, nullable types, enums, `DateOnly` and JSON columns such as `Superpowers[]`.
-- **`SqlRepository<T>`** is a generic base repository. `HeroRepository` and `UserRepository` extend it with specific queries such as search, paging and uniqueness checks.
+- **A fluent `EntityMap<T>`** describes the mapping in Infrastructure, so the domain entities carry no attributes. `SuperHeroMap` and `UserMap` (deriving from `AuditableEntityMap<T>`) map the entities **directly** to their tables:
+  ```csharp
+  ToTable("SuperHeroes");
+  Property(h => h.Superpowers).StoredAsJson();
+  Property(h => h.State).IsAnsi().IsFixedLength().HasMaxLength(2);
+  ```
+  Conventions:
+  - every property with a setter is a column;
+  - `Id` is the identity key;
+  - `CreatedBy` and `CreatedAt` are insert-only;
+  - `IsDeleted` is the soft-delete flag.
+- **`EntityMetadata`** reads the entity's properties, private setters and private constructor once through Reflection, and caches them per map. It validates table and column names as plain identifiers, gives each column an explicit `DbType` and size (for example `NVARCHAR(100)`, `CHAR(2)`, `DATE`), and reads nullability from the C# declarations.
+- **`SqlStatementBuilder`** generates **parameterized** `SELECT`, `INSERT ... OUTPUT INSERTED.[Id]`, `UPDATE` and soft-`DELETE` statements. Identifiers come only from the metadata and are bracket-quoted. Every value is a typed parameter, so there is no SQL injection surface. Reads and updates skip soft-deleted rows, and updates never touch the creation audit.
+- **`DataRecordMapper<T>`** hydrates entities from a data reader. It resolves column positions once per reader, calls the private setters, and handles `DBNull`, nullable types, enums, `DateOnly`, UTC `DateTime` and JSON columns such as `Superpowers`.
+- **`SqlRepository<T>`** is a generic base repository: `GetByIdAsync`, `ListAsync`, `InsertAsync`, `UpdateAsync` and `SoftDeleteAsync`, plus `QueryAsync` and `ExecuteScalarAsync` for custom queries. Each operation is timed, traced and logged (see [Logging and telemetry](#logging-and-telemetry-application-insights)). `HeroRepository` and `UserRepository` (T06) extend it with search, paging and uniqueness checks.
+- It is built on the ADO.NET base classes (`DbConnection`, `DbCommand`, `DbParameter`), so only `SqlConnectionFactory` knows the provider (`Microsoft.Data.SqlClient`).
 
 ## Solution structure
 

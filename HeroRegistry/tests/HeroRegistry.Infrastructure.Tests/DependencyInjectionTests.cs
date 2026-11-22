@@ -1,6 +1,7 @@
 using HeroRegistry.Infrastructure.Persistence;
 using HeroRegistry.Infrastructure.Persistence.Diagnostics;
 using HeroRegistry.Infrastructure.Persistence.Migrations;
+using HeroRegistry.Infrastructure.Persistence.Sql;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -106,6 +107,15 @@ public class DependencyInjectionTests
 
         provider.GetRequiredService<IDatabaseMigrator>().ShouldBeOfType<DatabaseMigrator>();
         provider.GetServices<IHostedService>().ShouldContain(service => service is DatabaseInitializer);
+    }
+
+    [Fact]
+    public void Registers_the_SQL_Server_connection_factory_as_a_singleton()
+    {
+        using var provider = BuildProvider(Configuration());
+
+        provider.GetRequiredService<IDbConnectionFactory>().ShouldBeOfType<SqlConnectionFactory>()
+            .ShouldBeSameAs(provider.GetRequiredService<IDbConnectionFactory>());
     }
 
     private static ServiceProvider BuildProvider(IConfiguration configuration) =>

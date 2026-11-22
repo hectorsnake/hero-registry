@@ -10,6 +10,8 @@ Implement the Application persistence ports on top of the generic `SqlRepository
   - `IHeroRepository`: `GetByIdAsync`, `SearchAsync(HeroQuery)` returns `PagedResult<SuperHero>`, `AddAsync`, `UpdateAsync`, `SoftDeleteAsync`, `ExistsByHeroNameAsync(name, excludeId?)`, `ExistsByEmailAsync(email, excludeId?)`
   - `IUserRepository`: `GetByIdAsync`, `GetByUserNameAsync`, `ListAsync`, `AddAsync`, `SoftDeleteAsync`, `ExistsByUserNameAsync`, `ExistsByEmailAsync`
 - [ ] Implement them in **Infrastructure**: `HeroRepository : SqlRepository<SuperHero>, IHeroRepository`, and the same pattern for `UserRepository`.
+  - Pass `new SuperHeroMap()` or `new UserMap()` to the base constructor. `GetByIdAsync`, `InsertAsync` (`AddAsync`), `UpdateAsync` and `SoftDeleteAsync` already exist and are instrumented (T05).
+  - Build custom queries from `SelectFromTable` and `SelectList`, with `Parameter(column, value, "@Name")` for typed parameters. Paging can read `COUNT(*) OVER()` through `QueryAsync`'s `readRow` callback, as `SqlRepositoryTests.FirstPageAsync` shows.
 - [ ] `SearchAsync`:
   - Parameterized `LIKE` on HeroName, FirstName, LastName and City.
   - `EXISTS (SELECT 1 FROM OPENJSON(Superpowers) WHERE value LIKE @search)`.
