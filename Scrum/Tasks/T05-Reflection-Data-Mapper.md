@@ -21,6 +21,8 @@ Persistence/
 
 To keep Domain free of persistence concerns, the mapping is configured in Infrastructure. Use either attributes on internal persistence records or a fluent `EntityMap<T>` registration. Choose one and document it.
 
+> After T04: the domain entities carry no attributes and never will. A fluent `EntityMap<T>` in Infrastructure that maps `SuperHero` and `User` **directly** (table name, key, JSON column, soft delete) avoids a duplicate set of persistence classes and is the recommended option.
+
 ## Steps
 - [ ] `EntityMetadata<T>`:
   - Resolves the table name, key property (identity) and mapped columns.
@@ -36,7 +38,11 @@ To keep Domain free of persistence concerns, the mapping is configured in Infras
   - Maps by column name (case-insensitive) and caches the ordinal per reader.
   - Handles `DBNull` to `null`, `Nullable<T>`, enums and `DateOnly` (DATE).
   - `[JsonColumn]` values are converted with `System.Text.Json` (`string[]` to and from `NVARCHAR(MAX)`).
-  - Sets private setters through Reflection.
+  - Sets private setters through Reflection. The T04 entities are designed for this:
+    - Create them with `Activator.CreateInstance(type, nonPublic: true)`, using their private parameterless constructor.
+    - Set properties through `PropertyInfo.SetValue`. Base-class audit properties use `private protected` setters, which are visible through the derived type.
+    - `SuperHero.Superpowers` accepts a `string[]` from the JSON column.
+    - `EncapsulationTests` in Domain.Tests already proves the approach.
 - [ ] `SqlRepository<T>`:
   - `GetByIdAsync`, `ListAsync`, `InsertAsync`, `UpdateAsync`, `SoftDeleteAsync`
   - Protected helpers `QueryAsync<T>(sql, params)` and `ExecuteScalarAsync` for custom queries

@@ -11,6 +11,8 @@ Implement the hero business logic (CRUD use cases and validation), independent o
   - `ICurrentUser` (UserId, IsAdmin)
   - `IClock` (UtcNow, Today), for testability
 - [ ] Validators (FluentValidation or hand-written `IValidator<T>`): every field rule from the user story's business rules table. Collect **all** field errors and return them together.
+  - Reuse the limits in `SuperHeroRules` (T04) instead of repeating numbers. The domain entity rejects only the **first** violation, so these validators are what give the user the complete list of field errors.
+  - Map any `DomainException` that still escapes to a `Validation` error on its `Field`.
 - [ ] `HeroService` (plain class, no MediatR) behind `IHeroService`:
   - `GetAsync(id)`: returns `NotFound` if missing or deleted.
   - `SearchAsync(query)`: clamps `pageSize` to the range 1 to 100.
