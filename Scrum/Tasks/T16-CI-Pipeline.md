@@ -10,7 +10,7 @@ Automatically build and test the back end and front end on every push and pull r
 - [ ] Job `backend` (ubuntu-latest, which has Docker for Testcontainers):
   - `actions/setup-dotnet` (10.0.x)
   - `dotnet restore`, `dotnet build -c Release --no-restore`
-  - `dotnet test -c Release --no-build --collect:"XPlat Code Coverage"`
+  - `dotnet test --solution HeroRegistry/HeroRegistry.slnx -c Release --no-build --coverage --coverage-output-format cobertura` (Microsoft.Testing.Platform, enabled by `global.json`)
   - Upload the test results and coverage report as artifacts.
 - [ ] Job `frontend`:
   - `actions/setup-node` (22, npm cache)

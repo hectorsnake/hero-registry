@@ -53,7 +53,7 @@ It is built with **.NET 10 (ASP.NET Core Web API)** using **Clean Architecture**
 | Database         | SQL Server 2022                                                                              |
 | Dev orchestration| .NET Aspire (AppHost and ServiceDefaults: SQL Server, API and Angular with one command)      |
 | Delivery         | Docker and Docker Compose                                                                    |
-| Testing          | xUnit, NSubstitute, Shouldly, Testcontainers (SQL Server), `WebApplicationFactory`, Vitest   |
+| Testing          | xUnit v3 (Microsoft.Testing.Platform), NSubstitute, Shouldly, Testcontainers (SQL Server), `WebApplicationFactory`, Vitest |
 | CI               | GitHub Actions                                                                               |
 
 ## Architecture
@@ -253,10 +253,10 @@ The project is developed with **TDD** (red, green, refactor).
 
 ```bash
 # Back end: all test projects
-dotnet test HeroRegistry/HeroRegistry.slnx
+dotnet test --solution HeroRegistry/HeroRegistry.slnx
 
-# Back end with coverage
-dotnet test HeroRegistry/HeroRegistry.slnx --collect:"XPlat Code Coverage"
+# Back end with coverage (Cobertura report in each project's TestResults folder)
+dotnet test --solution HeroRegistry/HeroRegistry.slnx --coverage --coverage-output-format cobertura
 
 # Front end
 cd hero-registry-ui && npm test
@@ -271,6 +271,8 @@ cd hero-registry-ui && npm test
 | Angular specs               | Services, guards, interceptors and components                           |
 
 Docker must be running for the Infrastructure tests.
+
+The test projects use **xUnit v3** on **Microsoft.Testing.Platform**. The `global.json` at the repository root opts `dotnet test` into that platform. This is why the command takes `--solution`.
 
 ## Design decisions
 

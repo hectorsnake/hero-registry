@@ -1,3 +1,22 @@
 <Solution>
-  <Project Path="HeroRegistry/HeroRegistry.csproj" />
+  <Folder Name="/Solution Items/">
+    <File Path=".dockerignore" />
+    <File Path=".gitignore" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+  </Folder>
+  <Folder Name="/src/">
+    <File Path="src/Directory.Build.props" />
+    <Project Path="src/HeroRegistry.Domain/HeroRegistry.Domain.csproj" />
+    <Project Path="src/HeroRegistry.Application/HeroRegistry.Application.csproj" />
+    <Project Path="src/HeroRegistry.Infrastructure/HeroRegistry.Infrastructure.csproj" />
+    <Project Path="src/HeroRegistry.Api/HeroRegistry.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <File Path="tests/Directory.Build.props" />
+    <Project Path="tests/HeroRegistry.Domain.Tests/HeroRegistry.Domain.Tests.csproj" />
+    <Project Path="tests/HeroRegistry.Application.Tests/HeroRegistry.Application.Tests.csproj" />
+    <Project Path="tests/HeroRegistry.Infrastructure.Tests/HeroRegistry.Infrastructure.Tests.csproj" />
+    <Project Path="tests/HeroRegistry.Api.Tests/HeroRegistry.Api.Tests.csproj" />
+  </Folder>
 </Solution>

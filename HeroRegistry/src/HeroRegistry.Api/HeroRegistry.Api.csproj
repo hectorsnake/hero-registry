@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!--
+    Presentation layer: ASP.NET Core Web API (controllers, authentication, composition root).
+    References Infrastructure only to wire up dependency injection.
+  -->
+
+  <PropertyGroup>
+    <UserSecretsId>9f2a7984-0d18-4e4d-95d4-1219bd342484</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerfileContext>..\..</DockerfileContext>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HeroRegistry.Application\HeroRegistry.Application.csproj" />
+    <ProjectReference Include="..\HeroRegistry.Infrastructure\HeroRegistry.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>
