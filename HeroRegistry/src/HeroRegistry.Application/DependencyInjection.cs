@@ -1,4 +1,5 @@
 using HeroRegistry.Application.Heroes;
+using HeroRegistry.Application.Users;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -20,7 +21,9 @@ public static class DependencyInjection
         // Hero use cases (T07).
         services.AddScoped<IHeroService, HeroService>();
 
-        // User registration and login use cases (T08) are registered here.
+        // Registration, login and user administration (T08).
+        services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IUserService, UserService>();
 
         return services;
     }

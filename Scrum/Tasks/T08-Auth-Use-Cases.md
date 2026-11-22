@@ -1,28 +1,75 @@
 # T08: User registration and login use cases (hashing and JWT)
 
-**User story:** [US-001](../US-001-SuperHero-Registry.md) · **Layer:** Application and Infrastructure · **Estimate:** 5 h · **Depends on:** T04
+**User story:** [US-001](../US-001-SuperHero-Registry.md) · **Layer:** Application and Infrastructure · **Estimate:** 5 h · **Depends on:** T04, T06, T07 · **Status:** Done
 
 ## Goal
 Implement user sign-up and login: business rules in Application, and cryptography and token adapters in Infrastructure.
 
 ## Steps
-- [ ] Application:
-  - Reuse the T07 building blocks: `Result`/`Result<T>`, `Errors` (add the codes `auth.invalid_credentials` and `user.duplicate`), `ICurrentUser`, `TimeProvider`, a hand-written validator in the style of `HeroRequestValidator` (limits from `UserRules`), and the `DuplicateEntityException` to `Conflict` pattern.
-  - DTOs: `RegisterUserRequest`, `LoginRequest`, `AuthResponse` (token, expiresAt, user), `UserResponse`
-  - Ports: `IPasswordHasher` (`Hash`, `Verify`) and `ITokenService` (`CreateToken(User)`)
-  - Validators for user name, email and the password policy
-  - `AuthService.RegisterAsync`: validate, check uniqueness (Conflict), hash the password, `User.Register`, save. `IsAdmin` is always `false`.
-  - `AuthService.LoginAsync`: look up the user by user name (case-insensitive) and verify the password. A missing user, a deleted user and a wrong password all return the **same** `Unauthorized` error. Hash a dummy password when the user is missing, to resist timing attacks.
-  - `UserService.ListAsync` and `UserService.DeleteAsync` (admin only; an admin cannot delete themselves).
-- [ ] Infrastructure:
-  - `BCryptPasswordHasher` (BCrypt.Net-Next 4.2.0, already pinned in `Directory.Packages.props`, work factor 11 or higher). It must verify the seeded administrator's `$2a$11$` hash from `0003_SeedData.sql` (T03.1). Add a test that `Verify("Admin", seededHash)` succeeds.
-  - `JwtTokenService`: claims `sub` (user id), `unique_name` and `role` (`Admin` or `User`). HMAC-SHA256, expiration from `JwtOptions` (issuer, audience, key, minutes).
-  - Validate `JwtOptions` on start (`ValidateOnStart`); the key must be at least 32 bytes.
+- [x] Application, reusing the T07 building blocks (`Result`, `Errors`, `ICurrentUser`, `TimeProvider`, the hand-written validator style, and `DuplicateEntityException` to `Conflict`):
+  - DTOs (`Users/UserContracts.cs`):
+    - `RegisterUserRequest` and `LoginRequest`. **Their `ToString()` masks the password** (`Password = ***`), so logging a request never leaks it.
+    - `UserResponse` (Id, UserName, Email, IsAdmin, CreatedAt; never the hash).
+    - `AuthResponse` (AccessToken, `TokenType` "Bearer", ExpiresAt, User).
+  - Ports (`Abstractions/Security`): `IPasswordHasher` (`Hash`, `Verify(password, hash?)`), `ITokenService` (`CreateToken(User)` returns `AccessToken`), and the shared `Roles` (`Admin`, `User`), moved here from the API so Infrastructure can use them too.
+  - `UserRequestValidator` (limits from `UserRules`, email from the domain value object), listing every problem at once:
+    - User name: 3 to 50 characters, `^[a-zA-Z0-9._-]+$`.
+    - Email format.
+    - **Password policy:** 8 to 64 characters, uppercase, lowercase, digit and symbol, and at most 72 UTF-8 bytes (BCrypt ignores anything after that).
+    - Login only requires both fields: the policy applies to new passwords, so the seeded `Admin` / `Admin` still works.
+  - `AuthService.RegisterAsync`:
+    1. Validate.
+    2. Check uniqueness with the stored forms (trimmed name, lower-cased email); `Conflict` `user.duplicate` names every taken field.
+    3. **Hash only after that** (BCrypt is slow by design).
+    4. `User.Register`: never an admin; `CreatedBy` is the current user when an admin creates the account, null for self-registration.
+    5. Save. A database duplicate becomes `Conflict`.
+  - `AuthService.LoginAsync`: look up the user by name (ignoring case and spaces) and verify the password exactly as typed.
+    - An unknown user, a deleted user and a wrong password all return the **identical** `auth.invalid_credentials` error ("Invalid user name or password.").
+    - Without a user, `Verify(password, null)` runs a full BCrypt check against a dummy hash, so response time doesn't reveal whether a user name exists.
+  - `UserService`:
+    - `GetCurrentAsync` (for `/api/auth/me`): a token of a deleted account gets Unauthorized.
+    - `ListAsync`: admins only.
+    - `DeleteAsync`: admins only, **never their own account** (a Validation error on `Id`, so an administrator always remains), with NotFound and "deleted meanwhile" handling.
+  - Errors: added `Errors.InvalidCredentials()` and the codes `auth.invalid_credentials`, `user.duplicate` and `user.not_found`.
+- [x] Infrastructure (`Security/`):
+  - `BCryptPasswordHasher` (BCrypt.Net-Next 4.2.0, work factor 11).
+    - Produces `$2a$11$` hashes and **verifies the seeded administrator's hash with "Admin"**.
+    - A null or empty hash triggers the dummy verification and returns false.
+    - A malformed hash returns false instead of throwing.
+  - `JwtTokenService` (Microsoft.IdentityModel.JsonWebTokens **8.19.2**, the version ASP.NET Core's JwtBearer 10.0.15 uses).
+    - Claims: `sub` (user id), `unique_name`, `role` (`Admin` or `User`), `jti`.
+    - HMAC-SHA256, with issuer, audience and expiration from `JwtOptions`.
+    - **No email and no hash in the token** (its payload is only Base64-encoded).
+  - `JwtOptions` (`Jwt` section; defaults: Issuer `hero-registry-api`, Audience `hero-registry-ui`, 60 minutes) with `JwtOptionsValidator` and **`ValidateOnStart`**.
+    - The key is required and at least 32 bytes; the error message explains how to set it.
+    - Issuer and audience are required, and the lifetime is 1 to 1440 minutes.
+  - DI: the hasher and token service are singletons. `IAuthService` and `IUserService` are scoped (in `AddApplication`).
+- [x] Configuration:
+  - API `appsettings.json` has the `Jwt` section **without** the key.
+  - **The key is a secret:** generated by the AppHost under Aspire (`Jwt__Key`), from user secrets when the API runs on its own (a random development key was stored in this machine's API user secrets), and from `.env` under Docker Compose (T15).
+  - `HeroRegistryApiFactory` uses its own test key.
 
 ## Tests (TDD)
-- [ ] `AuthService`: registration success hashes the password, so the stored value is not the plain text. Covers duplicate user name or email and weak passwords. Login success returns a token. Wrong password, unknown user and deleted user all return identical errors.
-- [ ] `BCryptPasswordHasher`: a hash verifies, and the wrong password fails.
-- [ ] `JwtTokenService`: a token can be decoded and contains the expected claims and expiration.
+- [x] Application:
+  - `UserRequestValidatorTests`: every user name, email and password rule, including 8 and 64 characters, the 72-byte limit, every missing class listed, and messages that never repeat the password. Login doesn't apply the policy. **`ToString()` of both requests never contains the password.**
+  - `AuthServiceTests`:
+    - Registration hashes the password, so the stored value isn't the plain text, and never creates an admin.
+    - The creator is recorded for admin-created accounts.
+    - A weak password isn't hashed or saved; a duplicate user name isn't hashed.
+    - Both conflicts are reported, the email is checked normalized, and a database duplicate becomes Conflict.
+    - Login returns the token and user. **Wrong password, unknown user and deleted user return equal errors.** The dummy verification runs for unknown users, the password is used as typed, and missing fields are a validation error with no lookup.
+  - `UserServiceTests`: current user; list and delete for admin, regular user and anonymous; self-delete blocked; NotFound and deleted meanwhile; no hash in responses.
+- [x] Infrastructure:
+  - `BCryptPasswordHasherTests`: format and work factor, salt, right and wrong passwords, **the seeded "Admin" hash**, null or empty hashes, malformed hashes, empty passwords.
+  - `JwtTokenServiceTests`: claims, Admin role, issuer, audience, issued-at and expiration (fake clock), no email or hash in the payload, HS256 valid with the right key and rejected with another.
+  - `JwtOptionsTests`: binding and defaults, missing, short or invalid settings, port registrations.
+  - `AuthenticationIntegrationTests` (real SQL Server):
+    - **The seeded Admin logs in with "Admin"** and gets an Admin token.
+    - Register then log in (with a differently-cased name). The stored password is a `$2a$11$` hash.
+    - Duplicate user name; bad credentials give the identical error; a deleted user can't log in.
+- [x] Api: `JwtStartupValidationTests` checks the API refuses to start with an empty or short key.
 
 ## Done when
-- No plain-text password is ever persisted or logged, and all auth tests pass.
+- [x] No plain-text password is ever persisted (the integration test reads the stored hash) or logged (requests mask it, and the data-layer logs never contain values, T02.2).
+- [x] All auth tests pass. The Release build has 0 warnings. All 593 tests pass: Domain 120, Application 174, Infrastructure 252, ServiceDefaults 20 and Api 27.
+- [x] The stack still starts under Aspire (`/health` returns `Healthy`) with the new startup validation.

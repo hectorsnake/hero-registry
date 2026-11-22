@@ -1,12 +1,15 @@
 using HeroRegistry.Application.Abstractions.Persistence;
+using HeroRegistry.Application.Abstractions.Security;
 using HeroRegistry.Infrastructure.Persistence;
 using HeroRegistry.Infrastructure.Persistence.Repositories;
 using HeroRegistry.Infrastructure.Persistence.Diagnostics;
 using HeroRegistry.Infrastructure.Persistence.Migrations;
 using HeroRegistry.Infrastructure.Persistence.Sql;
+using HeroRegistry.Infrastructure.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 
 namespace HeroRegistry.Infrastructure;
 
@@ -50,7 +53,13 @@ public static class DependencyInjection
         services.AddScoped<IHeroRepository, HeroRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
 
-        // Password hasher and token service (T08) are registered here.
+        // Password hashing and access tokens (T08). Invalid JWT settings stop the application at startup.
+        services.AddOptions<JwtOptions>()
+            .Bind(configuration.GetSection(JwtOptions.SectionName))
+            .ValidateOnStart();
+        services.AddSingleton<IValidateOptions<JwtOptions>, JwtOptionsValidator>();
+        services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
+        services.AddSingleton<ITokenService, JwtTokenService>();
 
         return services;
     }

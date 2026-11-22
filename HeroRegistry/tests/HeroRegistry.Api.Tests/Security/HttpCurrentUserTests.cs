@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using HeroRegistry.Api.Security;
 using HeroRegistry.Application.Abstractions;
+using HeroRegistry.Application.Abstractions.Security;
 using HeroRegistry.Application.Heroes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;

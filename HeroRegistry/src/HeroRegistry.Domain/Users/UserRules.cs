@@ -11,4 +11,12 @@ public static class UserRules
 
     /// <summary>Size of the Password column, which stores a hash (a BCrypt hash is 60 characters).</summary>
     public const int PasswordHashMaxLength = 200;
+
+    /// <summary>Password policy for new accounts: minimum length (plus upper, lower, digit and symbol).</summary>
+    public const int PasswordMinLength = 8;
+
+    public const int PasswordMaxLength = 64;
+
+    /// <summary>BCrypt only uses the first 72 bytes of a password, so longer ones are rejected rather than silently cut.</summary>
+    public const int PasswordMaxBytes = 72;
 }

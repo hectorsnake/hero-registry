@@ -264,6 +264,10 @@ How it works:
 
 - **npm packages** are installed automatically before the UI starts.
 - **Secrets are generated on first run** and stored in the AppHost's user secrets, never in source control. These are the SQL Server SA password (`Parameters:sql-password`) and a random 64-character JWT signing key (`Parameters:jwt-key`, passed to the API as `Jwt__Key`). To view them, run `dotnet user-secrets list --project HeroRegistry/src/HeroRegistry.AppHost`.
+- **The API refuses to start without a JWT signing key** (`Jwt:Key`, at least 32 bytes). Under Aspire it is provided automatically. To run the API on its own (for example F5 on the API project), store one in the API's user secrets once:
+  ```bash
+  dotnet user-secrets set "Jwt:Key" "<at least 32 random characters>" --project HeroRegistry/src/HeroRegistry.Api
+  ```
 - **SQL Server keeps running** after you stop the AppHost (persistent lifetime), and its data lives in the `hero-registry-sql-data` volume. Restarts are fast, and data survives them. To reset everything, run `docker rm -f` on the `sql-*` container, then `docker volume rm hero-registry-sql-data`.
 - **Without Aspire**, you can run the API (`dotnet run --project HeroRegistry/src/HeroRegistry.Api`) and the UI (`npm start` in `hero-registry-ui`) separately. In that case, provide `ConnectionStrings__HeroRegistryDb` yourself.
 

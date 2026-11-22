@@ -41,4 +41,11 @@ public static class Errors
 
     public static Error Unauthorized(string message = "You must be signed in.") =>
         new(ErrorType.Unauthorized, "auth.unauthenticated", message, NoFields);
+
+    /// <summary>
+    /// The one login failure: the same for an unknown user, a deleted user and a wrong password, so the
+    /// response never reveals which user names exist.
+    /// </summary>
+    public static Error InvalidCredentials() =>
+        new(ErrorType.Unauthorized, "auth.invalid_credentials", "Invalid user name or password.", NoFields);
 }

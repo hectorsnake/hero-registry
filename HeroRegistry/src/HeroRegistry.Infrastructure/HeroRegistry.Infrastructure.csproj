@@ -10,6 +10,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Password hashing (T08). -->
+    <PackageReference Include="BCrypt.Net-Next" />
     <PackageReference Include="Microsoft.Data.SqlClient" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
@@ -18,6 +20,8 @@
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
     <!-- OptionsBuilder.Bind: the "Database" configuration section. -->
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+    <!-- Creating JWT access tokens (T08). Same IdentityModel version that the API's JwtBearer uses to validate them. -->
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
     <!-- SuppressInstrumentationScope: keeps health-check queries out of telemetry. -->
     <PackageReference Include="OpenTelemetry" />
   </ItemGroup>

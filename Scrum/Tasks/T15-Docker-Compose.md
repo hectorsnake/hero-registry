@@ -14,7 +14,9 @@ Deliver the whole system so that it runs with a single `docker compose up --buil
   - `nginx.conf` uses SPA fallback (`try_files $uri /index.html`) and proxies `/api` to `http://api:8080`. Because the UI and the API share the same origin, no CORS is needed.
 - [ ] `docker-compose.yml` services:
   - `sqlserver`: `mcr.microsoft.com/mssql/server:2022-latest` with `ACCEPT_EULA`, `MSSQL_SA_PASSWORD` from `.env`, a named volume and a healthcheck using `sqlcmd`.
-  - `api`: `ConnectionStrings__HeroRegistryDb`, `Jwt__Key`, `Jwt__Issuer` and `Jwt__Audience` from `.env`. `depends_on: sqlserver (service_healthy)`. Port `5080:8080`.
+  - `api`: `ConnectionStrings__HeroRegistryDb` and `Jwt__Key` from `.env`. `depends_on: sqlserver (service_healthy)`. Port `5080:8080`.
+    - `Jwt__Key` is **required** (at least 32 bytes): the API refuses to start without it (T08). In `.env.example`, leave a clear "replace me" note, and document generating one, for example `openssl rand -base64 48`.
+    - `Jwt__Issuer`, `Jwt__Audience` and `Jwt__ExpirationMinutes` have defaults in `appsettings.json`. Override them only if needed.
   - `ui`: `depends_on: api`. Port `8080:80`.
 - [ ] Add `.env.example` (committed) and add `.env` to `.gitignore`.
 - [ ] Application Insights ([T02.2](T02.2-Application-Insights-Logging.md)): pass `APPLICATIONINSIGHTS_CONNECTION_STRING` to the `api` service from `.env`. In `.env.example`, leave it **empty**, which disables it. Never use a placeholder: a non-empty invalid value stops the API at startup. Also set `OTEL_SERVICE_NAME=hero-registry-api`, so Application Insights shows a clear cloud role name.

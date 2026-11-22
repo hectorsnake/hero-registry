@@ -7,6 +7,11 @@ Expose the second API for user creation, login and user management, with both au
 
 ## Steps
 - [ ] Configure JWT Bearer authentication from `JwtOptions`. Add an authorization policy `AdminOnly` (`role = Admin`). Set a fallback policy that requires an authenticated user.
+  - Add `Microsoft.AspNetCore.Authentication.JwtBearer` **10.0.15**. It uses IdentityModel 8.19.2, the same version as the T08 token service.
+  - Validate with the same `JwtOptions` (registered and validated at startup by T08): `ValidIssuer`, `ValidAudience`, `IssuerSigningKey` (UTF-8 bytes of `Key`), lifetime checked, and a small `ClockSkew` (for example 30 s).
+  - Keep the claim names the T08 tokens use: `MapInboundClaims = false`, `NameClaimType = "unique_name"`, `RoleClaimType = "role"`. Then `User.IsInRole(Roles.Admin)` and `HttpCurrentUser` (which reads `sub`) work as they are.
+  - Use cases are ready: `IAuthService` (`RegisterAsync`, `LoginAsync`) and `IUserService` (`GetCurrentAsync`, `ListAsync`, `DeleteAsync`), with self-delete already blocked as a Validation error on `Id`.
+  - Tests: `HeroRegistryApiFactory.TestJwtKey` is the key of the API under test.
 - [x] `HttpCurrentUser : ICurrentUser` reads the claims from `IHttpContextAccessor`. **Done in T07** (`Api/Security/HttpCurrentUser.cs`, with `Roles.Admin` and `Roles.User`). The JWT from T08 must therefore put the user id in `sub` and the role in the role claim, matching `Roles`.
 - [ ] Telemetry ([T02.2](T02.2-Application-Insights-Logging.md)): tag request spans with the user id (`enduser.id`), never the user name or email, so Application Insights can filter requests by user.
 - [ ] `AuthController` (`/api/auth`):
