@@ -37,6 +37,17 @@ public sealed record LoginRequest
     }
 }
 
+/// <summary>
+/// Body of <c>PUT /api/users/{id}</c> (AC11). Only the user name and email can change; the password
+/// and the administrator flag cannot be updated through this request.
+/// </summary>
+public sealed record UpdateUserRequest
+{
+    public string? UserName { get; init; }
+
+    public string? Email { get; init; }
+}
+
 /// <summary>A user account as returned by the API. Never includes the password hash.</summary>
 public sealed record UserResponse(int Id, string UserName, string Email, bool IsAdmin, DateTime CreatedAt);
 

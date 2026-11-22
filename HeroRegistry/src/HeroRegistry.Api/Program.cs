@@ -14,7 +14,9 @@ builder.Services
     .AddInfrastructure(builder.Configuration);
 
 builder.Services.AddControllers();
-builder.Services.AddAuthorization();
+
+// JWT Bearer authentication, the AdminOnly policy, and "signed in" as the default for every endpoint (T09).
+builder.Services.AddJwtAuthentication();
 
 // The signed-in user for the use cases (Application's ICurrentUser port).
 builder.Services.AddHttpContextAccessor();
@@ -25,16 +27,18 @@ builder.Services.AddApiDocumentation();
 
 var app = builder.Build();
 
-// Development only: /openapi/v1.json, /scalar, and "/" redirecting to /scalar.
+// Development only: /openapi/v1.json, /scalar, and "/" redirecting to /scalar (anonymous).
 app.MapApiDocumentation();
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
+app.UseUserTelemetry();
 app.UseAuthorization();
 
 app.MapControllers();
 
-// /health (readiness, includes SQL Server) and /alive (liveness).
+// /health (readiness, includes SQL Server) and /alive (liveness), anonymous.
 app.MapDefaultEndpoints();
 
 // Minimal API: versioned route group -> /api/v1/...

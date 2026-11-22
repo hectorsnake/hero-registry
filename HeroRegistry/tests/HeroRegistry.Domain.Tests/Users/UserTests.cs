@@ -92,6 +92,60 @@ public class UserTests
             .Field.ShouldBe("Password");
     }
 
+    // Account update (AC11)
+
+    [Fact]
+    public void UpdateAccount_changes_the_user_name_and_email_and_records_who_and_when()
+    {
+        var user = User.Register("peter", "peter@dailybugle.com", PasswordHash, UtcNow);
+        var later = UtcNow.AddDays(1);
+
+        user.UpdateAccount(" spider.man ", " Spidey@Avengers.org ", OtherUserId, later);
+
+        user.UserName.ShouldBe("spider.man");
+        user.Email.ShouldBe("spidey@avengers.org");
+        user.UpdatedBy.ShouldBe(OtherUserId);
+        user.UpdatedAt.ShouldBe(later);
+    }
+
+    [Fact]
+    public void UpdateAccount_never_changes_the_password_the_admin_flag_or_the_creation_audit()
+    {
+        var user = User.Register("peter", "peter@dailybugle.com", PasswordHash, UtcNow, createdBy: AdminId);
+
+        user.UpdateAccount("spider.man", "spidey@avengers.org", OtherUserId, UtcNow.AddDays(1));
+
+        user.Password.ShouldBe(PasswordHash);
+        user.IsAdmin.ShouldBeFalse();
+        user.CreatedBy.ShouldBe(AdminId);
+        user.CreatedAt.ShouldBe(UtcNow);
+    }
+
+    [Theory]
+    [InlineData("ab", "spidey@avengers.org", "UserName")]
+    [InlineData("spider man", "spidey@avengers.org", "UserName")]
+    [InlineData("spider.man", "not-an-email", "Email")]
+    public void An_invalid_update_is_rejected_and_leaves_the_account_unchanged(string userName, string email, string field)
+    {
+        var user = User.Register("peter", "peter@dailybugle.com", PasswordHash, UtcNow);
+
+        Should.Throw<DomainException>(() => user.UpdateAccount(userName, email, OtherUserId, UtcNow.AddDays(1)))
+            .Field.ShouldBe(field);
+
+        user.UserName.ShouldBe("peter");
+        user.Email.ShouldBe("peter@dailybugle.com");
+        user.UpdatedBy.ShouldBeNull();
+    }
+
+    [Fact]
+    public void A_deleted_account_cannot_be_updated()
+    {
+        var user = User.Register("peter", "peter@dailybugle.com", PasswordHash, UtcNow);
+        user.SoftDelete(AdminId, UtcNow.AddDays(1));
+
+        Should.Throw<DomainException>(() => user.UpdateAccount("spider.man", "spidey@avengers.org", AdminId, UtcNow.AddDays(2)));
+    }
+
     [Fact]
     public void Users_can_be_soft_deleted()
     {

@@ -39,6 +39,33 @@ public sealed class RequestTelemetryTests : IClassFixture<HeroRegistryApiFactory
         span.GetTagItem("http.response.status_code").ShouldBe(200);
     }
 
+    [Fact]
+    public async Task Requests_of_a_signed_in_user_are_tagged_with_the_user_id_only()
+    {
+        using var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
+            "Bearer", Fixtures.ApiClientExtensions.TokenFor(7, "peter.parker"));
+
+        using (await client.GetAsync("/api/v1/test", TestContext.Current.CancellationToken)) { }
+
+        var span = await WaitForSpanAsync(s => Path(s) == "/api/v1/test" && s.GetTagItem("enduser.id") is not null);
+        span.ShouldNotBeNull("the request span has no enduser.id tag");
+        span.GetTagItem("enduser.id").ShouldBe("7");
+        span.TagObjects.ShouldNotContain(tag => tag.Value is string && ((string)tag.Value).Contains("peter.parker"));
+    }
+
+    [Fact]
+    public async Task Anonymous_requests_have_no_user_tag()
+    {
+        using var client = _factory.CreateClient();
+
+        using (await client.GetAsync("/api/v1/test", TestContext.Current.CancellationToken)) { }
+
+        var span = await WaitForSpanAsync(s => Path(s) == "/api/v1/test");
+        span.ShouldNotBeNull();
+        span.GetTagItem("enduser.id").ShouldBeNull();
+    }
+
     [Theory]
     [InlineData("/health")]
     [InlineData("/alive")]

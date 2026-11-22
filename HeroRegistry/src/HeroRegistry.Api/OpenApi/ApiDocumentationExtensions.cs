@@ -19,13 +19,19 @@ public static class ApiDocumentationExtensions
     public static IServiceCollection AddApiDocumentation(this IServiceCollection services)
     {
         services.AddOpenApi(DocumentName, options =>
+        {
             options.AddDocumentTransformer((document, _, _) =>
             {
                 document.Info.Title = Title;
                 document.Info.Version = DocumentName;
                 document.Info.Description = Description;
                 return Task.CompletedTask;
-            }));
+            });
+
+            // JWT bearer: declare the scheme and require it on every non-anonymous endpoint.
+            options.AddDocumentTransformer(BearerSecurityTransformers.AddBearerScheme);
+            options.AddOperationTransformer(BearerSecurityTransformers.RequireBearerUnlessAnonymous);
+        });
 
         return services;
     }
@@ -39,16 +45,21 @@ public static class ApiDocumentationExtensions
             return app;
         }
 
-        app.MapOpenApi();
+        // The API reference stays reachable without a token (the fallback policy requires one otherwise).
+        app.MapOpenApi().AllowAnonymous();
 
         app.MapScalarApiReference(options => options
             .WithTitle(Title)
             .WithTheme(ScalarTheme.Purple)
-            .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient));
+            .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient)
+            // Pre-select the Bearer scheme in Scalar's Authentication panel.
+            .AddPreferredSecuritySchemes(BearerSecurityTransformers.SchemeName))
+            .AllowAnonymous();
 
         // The API's base URL opens the reference (Aspire dashboard links, browsers, F5).
         app.MapGet("/", () => Results.Redirect(ScalarPath))
-            .ExcludeFromDescription();
+            .ExcludeFromDescription()
+            .AllowAnonymous();
 
         return app;
     }

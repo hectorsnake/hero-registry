@@ -51,6 +51,25 @@ public sealed class User : AuditableEntity
         return user;
     }
 
+    /// <summary>
+    /// Changes the user name and email (AC11). Both are validated and normalized like in
+    /// <see cref="Register"/> before anything changes. The password, the administrator flag and the
+    /// creation audit are never touched.
+    /// </summary>
+    /// <exception cref="DomainException">A rule is violated, or the account has been deleted.</exception>
+    public void UpdateAccount(string userName, string email, int updatedBy, DateTime utcNow)
+    {
+        EnsureNotDeleted();
+        EnsureValidUpdate(updatedBy, utcNow);
+
+        var validatedName = ValidateUserName(userName);
+        var validatedEmail = EmailAddress.Create(email, nameof(Email)).Value;
+
+        UserName = validatedName;
+        Email = validatedEmail;
+        MarkUpdated(updatedBy, utcNow);
+    }
+
     private static string ValidateUserName(string? userName)
     {
         var name = Guard.RequiredText(userName, nameof(UserName), UserNameMinLength, UserNameMaxLength);

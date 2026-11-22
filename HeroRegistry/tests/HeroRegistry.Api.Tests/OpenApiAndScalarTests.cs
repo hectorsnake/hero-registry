@@ -78,6 +78,9 @@ public class OpenApiAndScalarTests(HeroRegistryApiFactory factory)
             builder => builder.UseEnvironment(Environments.Production));
         using var client = productionFactory.CreateClient(
             new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        // Signed in, so an unmapped URL is a plain 404 (anonymous callers get 401 for every unknown URL).
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
+            "Bearer", Fixtures.ApiClientExtensions.TokenFor(1, "Admin", isAdmin: true));
 
         using var response = await client.GetAsync(path, CancellationToken);
 

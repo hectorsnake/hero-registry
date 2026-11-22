@@ -127,6 +127,25 @@ public class LoginRequestValidatorTests
     }
 }
 
+public class UpdateUserRequestValidatorTests
+{
+    [Fact]
+    public void A_valid_update_has_no_errors()
+    {
+        UserRequestValidator.Validate(new UpdateUserRequest { UserName = "spider.man", Email = "spidey@avengers.org" })
+            .ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void User_name_and_email_follow_the_registration_rules()
+    {
+        UserRequestValidator.Validate(new UpdateUserRequest { UserName = "spider man", Email = "nope" }).Keys
+            .ShouldBe(["UserName", "Email"], ignoreOrder: true);
+        UserRequestValidator.Validate(new UpdateUserRequest()).Keys
+            .ShouldBe(["UserName", "Email"], ignoreOrder: true);
+    }
+}
+
 public class SensitiveRequestTests
 {
     [Fact]

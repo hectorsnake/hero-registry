@@ -30,12 +30,12 @@ It is built with **.NET 10 (ASP.NET Core Web API)** using **Clean Architecture**
 
 ## Features
 
-- **User accounts:** register, log in with a JWT, and view your own profile.
+- **User accounts:** register, log in with a JWT, view your own profile, and update your user name and email.
 - **Hero CRUD:** create, list (with search, sorting and paging), view, edit and delete superhero records.
 - **Role-based authorization:**
   - *Anonymous:* register, log in, health check.
-  - *Authenticated user:* read, create and update heroes.
-  - *Administrator:* everything above, plus deleting heroes and managing users.
+  - *Authenticated user:* read, create and update heroes, and update **their own** account.
+  - *Administrator:* everything above, plus deleting heroes, and managing users (list, update **any** account, delete).
 - **Soft delete:** deleted records are flagged with `IsDeleted` and never physically removed.
 - **Audit trail:** every record stores `CreatedBy`, `CreatedAt`, `UpdatedBy` and `UpdatedAt`.
 - **Business validation:** unique hero name and email, a power level from 1 to 100, a valid US address, a birth date in the past, and more.
@@ -207,11 +207,16 @@ In Development, the API publishes an interactive **Scalar API reference** at `/s
 
 | Verb   | Route                 | Auth      | Success | Description                    |
 | ------ | --------------------- | --------- | ------- | ------------------------------ |
-| POST   | `/api/auth/register`  | Anonymous | 201     | Create a user account          |
+| POST   | `/api/auth/register`  | Anonymous | 201     | Create a regular user account (400 invalid, 409 taken) |
 | POST   | `/api/auth/login`     | Anonymous | 200     | Return a JWT and user info     |
 | GET    | `/api/auth/me`        | User      | 200     | Current user's profile         |
 | GET    | `/api/users`          | Admin     | 200     | List users                     |
+| PUT    | `/api/users/{id}`     | Owner or Admin | 200 | Update user name and email. Users can update only themselves; admins can update anyone (403 otherwise) |
 | DELETE | `/api/users/{id}`     | Admin     | 204     | Soft-delete a user             |
+
+Send the token from login as `Authorization: Bearer <accessToken>`. Every endpoint requires a signed-in user unless marked Anonymous. An anonymous request to any other URL, even an unknown one, gets 401, so routes can't be probed.
+
+Errors are `application/problem+json` with a stable `code` (for example `user.duplicate` or `auth.invalid_credentials`) and, for 400 and 409, an `errors` object keyed by field (`userName`, `email`, ...).
 
 ### Heroes API
 

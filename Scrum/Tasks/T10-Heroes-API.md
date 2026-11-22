@@ -13,11 +13,17 @@ Expose the hero CRUD endpoints with correct HTTP verbs, parameters, status codes
   - `PUT {id:int}` with `[FromBody] UpdateHeroRequest`: returns 200, 400, 404 or 409.
   - `DELETE {id:int}` with `[Authorize(Policy = "AdminOnly")]`: returns 204, 403 or 404.
 - [ ] Controllers stay thin: no business logic, only delegation to `IHeroService` and result mapping. `IHeroService`, `CreateHeroRequest`, `UpdateHeroRequest`, `HeroResponse`, `HeroQuery` and `Result` already exist (T07). The service also enforces authentication and the admin-only delete, so the `[Authorize]` attributes are defense in depth.
+  - Ready from T09:
+    - Derive from `ApiControllerBase` (`OkOrError`, `NoContentOrError`, `ErrorResult`: problem details with `code` and camelCase `errors`).
+    - Use `AuthenticationExtensions.AdminOnlyPolicy` for `DELETE`. The fallback policy already requires a signed-in user.
+  - For `POST`, return `CreatedAtAction(nameof(Get), new { id }, hero)` so the Location header points to `GET /api/heroes/{id}`.
 - [ ] Bind `BirthDate` as `DateOnly` in `yyyy-MM-dd` format. `Superpowers` is a JSON array.
 - [ ] Use `CancellationToken` on every action.
 - [ ] Add samples to `HeroRegistry.Api.http` (log in, then use the token variable).
 
 ## Tests (TDD, `WebApplicationFactory`)
+Reuse the T09 test infrastructure: `DatabaseApiFactory` (a fresh, migrated and seeded database per class), and `ApiClientExtensions` (`SignedInClientAsync(AdminUserName, AdminPassword)`, `NewSignedInUserAsync()` for a regular user, `ReadJsonAsync()` for problem details).
+
 - [ ] Every endpoint returns 401 without a token.
 - [ ] Full CRUD flow as a regular user (registered by the test): create (201 and Location), get, update, then list contains the hero.
 - [ ] `DELETE` as a regular user returns 403. As `Admin` it returns 204, and a later `GET` returns 404.

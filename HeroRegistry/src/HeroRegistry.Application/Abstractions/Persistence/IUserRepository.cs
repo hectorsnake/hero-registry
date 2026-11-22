@@ -21,6 +21,9 @@ public interface IUserRepository
     /// <summary>Stores a new user, sets its <c>Id</c> and returns it.</summary>
     Task<int> AddAsync(User user, CancellationToken cancellationToken = default);
 
+    /// <summary>Saves the user's changes (AC11). Returns false if it no longer exists or was deleted.</summary>
+    Task<bool> UpdateAsync(User user, CancellationToken cancellationToken = default);
+
     /// <summary>Persists a soft delete (call <c>user.SoftDelete</c> first). Returns false if already deleted.</summary>
     Task<bool> SoftDeleteAsync(User user, CancellationToken cancellationToken = default);
 

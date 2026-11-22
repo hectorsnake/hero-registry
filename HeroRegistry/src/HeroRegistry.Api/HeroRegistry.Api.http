@@ -1,17 +1,70 @@
 @HeroRegistry_Api_HostAddress = http://localhost:5103
 
-### Smoke test endpoint
+### Smoke test endpoint (anonymous)
 GET {{HeroRegistry_Api_HostAddress}}/api/v1/test
 Accept: application/json
 
-### OpenAPI document (Development only)
+### OpenAPI document (Development only, anonymous)
 GET {{HeroRegistry_Api_HostAddress}}/openapi/v1.json
 Accept: application/json
 
-### Health: readiness, includes SQL Server (Development only)
+### Health: readiness, includes SQL Server (Development only, anonymous)
 GET {{HeroRegistry_Api_HostAddress}}/health
 
-### Health: liveness (Development only)
+### Health: liveness (Development only, anonymous)
 GET {{HeroRegistry_Api_HostAddress}}/alive
 
 # Interactive API reference (open in a browser): {{HeroRegistry_Api_HostAddress}}/scalar
+
+###############################################################################
+# Auth (T09)
+###############################################################################
+
+### Log in as the seeded administrator; the token is reused below
+# @name login
+POST {{HeroRegistry_Api_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "userName": "Admin",
+  "password": "Admin"
+}
+
+###
+@token = {{login.response.body.$.accessToken}}
+
+### Register a new regular user (anonymous) -> 201
+POST {{HeroRegistry_Api_HostAddress}}/api/auth/register
+Content-Type: application/json
+
+{
+  "userName": "peter.parker",
+  "email": "peter@dailybugle.com",
+  "password": "Sp1der-Sense!"
+}
+
+### The signed-in user's profile -> 200 (401 without the token)
+GET {{HeroRegistry_Api_HostAddress}}/api/auth/me
+Authorization: Bearer {{token}}
+
+###############################################################################
+# Users (T09, AC11)
+###############################################################################
+
+### List users (administrators only) -> 200
+GET {{HeroRegistry_Api_HostAddress}}/api/users
+Authorization: Bearer {{token}}
+
+### Update an account: your own, or any account as an administrator -> 200
+PUT {{HeroRegistry_Api_HostAddress}}/api/users/2
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "userName": "spider.man",
+  "email": "spidey@avengers.org"
+}
+
+### Soft-delete a user (administrators only, never yourself) -> 204
+DELETE {{HeroRegistry_Api_HostAddress}}/api/users/2
+Authorization: Bearer {{token}}

@@ -3,6 +3,8 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     <PackageReference Include="OpenTelemetry.Exporter.InMemory" />
+    <!-- A real SQL Server for the endpoint tests: the API migrates and seeds it at startup. -->
+    <PackageReference Include="Testcontainers.MsSql" />
   </ItemGroup>
 
   <ItemGroup>

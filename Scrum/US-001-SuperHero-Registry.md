@@ -87,6 +87,15 @@
 
 ---
 
+### AC11: Update a user account
+- **Given** I am signed in
+- **When** I update **my own** account (`PUT /api/users/{myId}`) with a valid user name and email
+- **Then** the changes are saved with `UpdatedBy` set to my id and `UpdatedAt` set to the current UTC time, and I get `200 OK` with the updated account.
+- **And** as an **administrator**, I can update **any** user's account the same way.
+- **And** as a **regular user**, updating **someone else's** account returns `403 Forbidden` and nothing changes. This is checked before looking the account up, so the response never reveals whether that user id exists.
+- **And** a missing or deleted account returns `404 Not Found` (for my own id, or any id as an administrator). Invalid data returns `400 Bad Request` with field-level errors. A user name or email already used by **another** active account returns `409 Conflict`; keeping my own values is allowed.
+- **And** an update never changes the password, the administrator flag (`IsAdmin`) or the creation audit (`CreatedBy`, `CreatedAt`). An anonymous request returns `401 Unauthorized`.
+
 ## Business rules
 
 ### SuperHero
@@ -115,8 +124,9 @@
 | UserName  | Required, 3 to 50 characters, `^[a-zA-Z0-9._-]+$`, unique among active users (case-insensitive) |
 | Email     | Required, valid format, unique among active users                               |
 | Password  | Policy: at least 8 characters, with uppercase, lowercase, a digit and a symbol. Stored as a BCrypt hash |
-| IsAdmin   | Defaults to `false`. Self-registration can never create an admin                |
+| IsAdmin   | Defaults to `false`. Self-registration can never create an admin. Not editable (see Out of scope) |
 | IsDeleted | Deleted users cannot log in                                                     |
+| Who can update an account | The account owner, or an administrator (any account). Only UserName and Email are editable (AC11) |
 
 ---
 
@@ -150,8 +160,8 @@
 
 ## Out of scope
 
-- Password reset, email confirmation and refresh tokens.
-- Editing a user's admin flag from the UI (admins are seeded).
+- Password reset, password change, email confirmation and refresh tokens.
+- Editing a user's admin flag (admins are seeded). Account updates (AC11) cover only the user name and email.
 - Restoring deleted records (undelete).
 - Hero images or file uploads.
 
@@ -172,7 +182,7 @@
 | T06 | [Hero and User repositories](Tasks/T06-Repositories.md)                                       | Infrastructure  | 5 h      | T05        |
 | T07 | [Hero use cases and validation](Tasks/T07-Hero-Use-Cases.md)                                  | Application     | 6 h      | T04        |
 | T08 | [User registration and login use cases (hashing and JWT)](Tasks/T08-Auth-Use-Cases.md)        | Application and Infrastructure | 5 h | T04 |
-| T09 | [Auth and Users API](Tasks/T09-Auth-Users-API.md)                                             | API             | 4 h      | T06, T08   |
+| T09 | [Auth and Users API, including account update (AC11)](Tasks/T09-Auth-Users-API.md)        | Application and API | 6 h | T06, T08   |
 | T10 | [Heroes API](Tasks/T10-Heroes-API.md)                                                         | API             | 5 h      | T06, T07, T09 |
 | T11 | [API cross-cutting concerns](Tasks/T11-API-Cross-Cutting.md)                                  | API             | 3 h      | T01        |
 | T12 | [Angular core: auth service, interceptor, guards and layout](Tasks/T12-Angular-Core.md)       | UI              | 5 h      | T09        |
@@ -182,7 +192,7 @@
 | T16 | [CI pipeline (GitHub Actions)](Tasks/T16-CI-Pipeline.md)                                      | DevOps          | 2 h      | T01        |
 | T17 | [Documentation, GenAI write-up and presentation](Tasks/T17-Documentation-Presentation.md)     | Docs            | 4 h      | all        |
 
-**Total estimate:** about 86 hours.
+**Total estimate:** about 88 hours.
 
 ### Suggested order
 

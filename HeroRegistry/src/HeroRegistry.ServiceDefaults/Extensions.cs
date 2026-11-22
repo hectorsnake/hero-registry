@@ -144,13 +144,14 @@ public static class Extensions
         if (app.Environment.IsDevelopment())
         {
             // Readiness: every registered health check must pass.
-            app.MapHealthChecks(HealthEndpointPath);
+            // Anonymous: probes (Aspire, Docker) carry no token.
+            app.MapHealthChecks(HealthEndpointPath).AllowAnonymous();
 
             // Liveness: only checks tagged "live".
             app.MapHealthChecks(AlivenessEndpointPath, new HealthCheckOptions
             {
                 Predicate = registration => registration.Tags.Contains(LiveTag),
-            });
+            }).AllowAnonymous();
         }
 
         return app;

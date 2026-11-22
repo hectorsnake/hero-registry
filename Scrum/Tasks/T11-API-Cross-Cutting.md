@@ -13,6 +13,7 @@ Add consistent error handling, documentation, CORS, health checks and configurat
   - Never log or return raw `SqlException` messages: they can contain personal data (T02.2).
 - [ ] Customize `InvalidModelStateResponseFactory` so that model binding errors return `ValidationProblemDetails` in the same shape as Application validation errors.
 - [ ] Add a JWT Bearer security scheme to the OpenAPI document and configure Scalar's preferred scheme (`AddPreferredSecuritySchemes`), so authorized endpoints can be called from Scalar. The OpenAPI document and Scalar UI themselves are done in [T02.1](T02.1-OpenAPI-Scalar.md).
+- [ ] Consistent 401 and 403 bodies (T09 follow-up): the authentication middleware (no token, or the wrong role on `AdminOnly`) currently answers with an **empty body**, while use-case errors are problem details with a `code`. Use `AddProblemDetails()` plus `UseStatusCodePages()`, or `JwtBearerEvents.OnChallenge` / `OnForbidden`, so every 401 and 403 is `application/problem+json`.
 - [ ] CORS policy `ui`: allowed origins come from configuration (`Cors:AllowedOrigins`), for the docker-compose UI origin and `http://localhost:4200`.
 - [ ] Health check `/health`, including a SQL Server connectivity check. Aspire ServiceDefaults provides `/health` and `/alive`.
 - [ ] Options pattern with validation for `JwtOptions`, `CorsOptions` and `DatabaseOptions`.

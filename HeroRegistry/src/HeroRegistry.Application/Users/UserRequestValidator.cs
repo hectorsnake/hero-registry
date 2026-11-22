@@ -26,6 +26,17 @@ public static class UserRequestValidator
         return errors;
     }
 
+    /// <summary>Account update (AC11): the same user name and email rules as registration.</summary>
+    public static IReadOnlyDictionary<string, string[]> Validate(UpdateUserRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var errors = new Dictionary<string, string[]>();
+        AddIfAny(errors, nameof(UpdateUserRequest.UserName), UserName(request.UserName));
+        AddIfAny(errors, nameof(UpdateUserRequest.Email), Email(request.Email));
+        return errors;
+    }
+
     /// <summary>
     /// Login only checks that both fields are present. The password policy applies to new passwords,
     /// not to existing ones (the seeded "Admin" password is weaker than the policy).
