@@ -12,7 +12,7 @@ Expose the hero CRUD endpoints with correct HTTP verbs, parameters, status codes
   - `POST` with `[FromBody] CreateHeroRequest`: returns 201 with `CreatedAtAction` (Location header), 400 or 409.
   - `PUT {id:int}` with `[FromBody] UpdateHeroRequest`: returns 200, 400, 404 or 409.
   - `DELETE {id:int}` with `[Authorize(Policy = "AdminOnly")]`: returns 204, 403 or 404.
-- [ ] Controllers stay thin: no business logic, only delegation to `IHeroService` and result mapping.
+- [ ] Controllers stay thin: no business logic, only delegation to `IHeroService` and result mapping. `IHeroService`, `CreateHeroRequest`, `UpdateHeroRequest`, `HeroResponse`, `HeroQuery` and `Result` already exist (T07). The service also enforces authentication and the admin-only delete, so the `[Authorize]` attributes are defense in depth.
 - [ ] Bind `BirthDate` as `DateOnly` in `yyyy-MM-dd` format. `Superpowers` is a JSON array.
 - [ ] Use `CancellationToken` on every action.
 - [ ] Add samples to `HeroRegistry.Api.http` (log in, then use the token variable).

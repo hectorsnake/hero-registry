@@ -1,5 +1,7 @@
 using HeroRegistry.Api.OpenApi;
+using HeroRegistry.Api.Security;
 using HeroRegistry.Application;
+using HeroRegistry.Application.Abstractions;
 using HeroRegistry.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,6 +15,10 @@ builder.Services
 
 builder.Services.AddControllers();
 builder.Services.AddAuthorization();
+
+// The signed-in user for the use cases (Application's ICurrentUser port).
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
 
 // OpenAPI document + Scalar API reference (T02.1).
 builder.Services.AddApiDocumentation();

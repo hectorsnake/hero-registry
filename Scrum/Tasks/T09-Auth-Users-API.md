@@ -7,7 +7,7 @@ Expose the second API for user creation, login and user management, with both au
 
 ## Steps
 - [ ] Configure JWT Bearer authentication from `JwtOptions`. Add an authorization policy `AdminOnly` (`role = Admin`). Set a fallback policy that requires an authenticated user.
-- [ ] `HttpCurrentUser : ICurrentUser` reads the claims from `IHttpContextAccessor`.
+- [x] `HttpCurrentUser : ICurrentUser` reads the claims from `IHttpContextAccessor`. **Done in T07** (`Api/Security/HttpCurrentUser.cs`, with `Roles.Admin` and `Roles.User`). The JWT from T08 must therefore put the user id in `sub` and the role in the role claim, matching `Roles`.
 - [ ] Telemetry ([T02.2](T02.2-Application-Insights-Logging.md)): tag request spans with the user id (`enduser.id`), never the user name or email, so Application Insights can filter requests by user.
 - [ ] `AuthController` (`/api/auth`):
   - `POST register` (`[AllowAnonymous]`): returns 201 + `UserResponse`, 400 or 409.
@@ -16,7 +16,7 @@ Expose the second API for user creation, login and user management, with both au
 - [ ] `UsersController` (`/api/users`, `[Authorize(Policy = "AdminOnly")]`):
   - `GET`: returns 200 + the list.
   - `DELETE {id:int}`: returns 204, 404 or 400 (cannot delete yourself).
-- [ ] Map `Result` errors to ProblemDetails in one place (a base controller or `ToActionResult()` extension).
+- [ ] Map `Result` errors to ProblemDetails in one place (a base controller or `ToActionResult()` extension). `ErrorType` (T07) maps to status codes: Validation 400 (`ValidationProblemDetails` from `FieldErrors`), Unauthorized 401, Forbidden 403, NotFound 404, Conflict 409 (with `FieldErrors` when present). Include `Error.Code` as a ProblemDetails extension.
 - [ ] Add `[ProducesResponseType]` attributes so the OpenAPI document is accurate.
 - [ ] Add request samples to `HeroRegistry.Api.http`.
 

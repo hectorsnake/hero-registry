@@ -7,6 +7,7 @@ Implement user sign-up and login: business rules in Application, and cryptograph
 
 ## Steps
 - [ ] Application:
+  - Reuse the T07 building blocks: `Result`/`Result<T>`, `Errors` (add the codes `auth.invalid_credentials` and `user.duplicate`), `ICurrentUser`, `TimeProvider`, a hand-written validator in the style of `HeroRequestValidator` (limits from `UserRules`), and the `DuplicateEntityException` to `Conflict` pattern.
   - DTOs: `RegisterUserRequest`, `LoginRequest`, `AuthResponse` (token, expiresAt, user), `UserResponse`
   - Ports: `IPasswordHasher` (`Hash`, `Verify`) and `ITokenService` (`CreateToken(User)`)
   - Validators for user name, email and the password policy
