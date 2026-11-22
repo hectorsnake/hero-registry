@@ -1,3 +1,4 @@
+using HeroRegistry.Infrastructure.Persistence;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -12,6 +13,14 @@ public static class DependencyInjection
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
+
+        services.AddOptions<DatabaseOptions>()
+            .Configure(options =>
+                options.ConnectionString = configuration.GetConnectionString(DatabaseOptions.ConnectionStringName)
+                    ?? string.Empty);
+
+        services.AddHealthChecks()
+            .AddCheck<SqlServerHealthCheck>(SqlServerHealthCheck.Name);
 
         // Connection factory, Reflection mapper, repositories (T05, T06),
         // password hasher and token service (T08) are registered here.

@@ -1,7 +1,17 @@
 @HeroRegistry_Api_HostAddress = http://localhost:5103
 
+### Smoke test endpoint
+GET {{HeroRegistry_Api_HostAddress}}/api/v1/test
+Accept: application/json
+
 ### OpenAPI document (Development only)
 GET {{HeroRegistry_Api_HostAddress}}/openapi/v1.json
 Accept: application/json
 
-###
+### Health: readiness, includes SQL Server (Development only)
+GET {{HeroRegistry_Api_HostAddress}}/health
+
+### Health: liveness (Development only)
+GET {{HeroRegistry_Api_HostAddress}}/alive
+
+# Interactive API reference (open in a browser): {{HeroRegistry_Api_HostAddress}}/scalar

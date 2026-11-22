@@ -1,0 +1,30 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.6.5">
+
+  <!--
+    .NET Aspire orchestrator, for DEVELOPMENT only.
+    Starts SQL Server (container), the API and the Angular dev server with a single command
+    (see the README, "Run for development"). Delivery uses Docker Compose instead (T15).
+  -->
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <UserSecretsId>87d67fc5-0276-4938-ba8d-8e31a07d2354</UserSecretsId>
+    <!--
+      Use the orchestrator (DCP) and dashboard from NuGet packages instead of the Aspire CLI bundle.
+      This works with a plain "dotnet run", in Visual Studio and in CI, whatever Aspire CLI version
+      is installed (or none). ASPIRE010 only reports this choice, so it is suppressed.
+    -->
+    <AspireUseCliBundle>false</AspireUseCliBundle>
+    <NoWarn>$(NoWarn);ASPIRE010</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.JavaScript" />
+    <PackageReference Include="Aspire.Hosting.SqlServer" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HeroRegistry.Api\HeroRegistry.Api.csproj" />
+  </ItemGroup>
+
+</Project>

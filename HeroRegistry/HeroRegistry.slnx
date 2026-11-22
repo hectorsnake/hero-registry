@@ -11,6 +11,8 @@
     <Project Path="src/HeroRegistry.Application/HeroRegistry.Application.csproj" />
     <Project Path="src/HeroRegistry.Infrastructure/HeroRegistry.Infrastructure.csproj" />
     <Project Path="src/HeroRegistry.Api/HeroRegistry.Api.csproj" />
+    <Project Path="src/HeroRegistry.ServiceDefaults/HeroRegistry.ServiceDefaults.csproj" />
+    <Project Path="src/HeroRegistry.AppHost/HeroRegistry.AppHost.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <File Path="tests/Directory.Build.props" />

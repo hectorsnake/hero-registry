@@ -9,15 +9,7 @@ namespace HeroRegistry.Api.Tests;
 public class ApiStartupTests(WebApplicationFactory<Program> factory)
     : IClassFixture<WebApplicationFactory<Program>>
 {
-    [Fact]
-    public async Task OpenApi_document_is_served_in_Development()
-    {
-        using var client = factory.CreateClient();
-
-        using var response = await client.GetAsync("/openapi/v1.json", TestContext.Current.CancellationToken);
-
-        response.StatusCode.ShouldBe(HttpStatusCode.OK);
-    }
+    // OpenAPI and Scalar behavior is covered in OpenApiAndScalarTests (T02.1).
 
     [Fact]
     public async Task Removed_template_endpoint_returns_not_found()

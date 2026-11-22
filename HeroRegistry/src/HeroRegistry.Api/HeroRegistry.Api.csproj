@@ -14,11 +14,13 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" />
+    <PackageReference Include="Scalar.AspNetCore" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\HeroRegistry.Application\HeroRegistry.Application.csproj" />
     <ProjectReference Include="..\HeroRegistry.Infrastructure\HeroRegistry.Infrastructure.csproj" />
+    <ProjectReference Include="..\HeroRegistry.ServiceDefaults\HeroRegistry.ServiceDefaults.csproj" />
   </ItemGroup>
 
 </Project>

@@ -11,7 +11,7 @@ Add consistent error handling, documentation, CORS, health checks and configurat
   - `DuplicateEntityException` returns 409.
   - Include the `traceId` in responses.
 - [ ] Customize `InvalidModelStateResponseFactory` so that model binding errors return `ValidationProblemDetails` in the same shape as Application validation errors.
-- [ ] OpenAPI (`Microsoft.AspNetCore.OpenApi`) with a JWT Bearer security scheme. Add Scalar UI in Development (optional).
+- [ ] Add a JWT Bearer security scheme to the OpenAPI document and configure Scalar's preferred scheme (`AddPreferredSecuritySchemes`), so authorized endpoints can be called from Scalar. The OpenAPI document and Scalar UI themselves are done in [T02.1](T02.1-OpenAPI-Scalar.md).
 - [ ] CORS policy `ui`: allowed origins come from configuration (`Cors:AllowedOrigins`), for the docker-compose UI origin and `http://localhost:4200`.
 - [ ] Health check `/health`, including a SQL Server connectivity check. Aspire ServiceDefaults provides `/health` and `/alive`.
 - [ ] Options pattern with validation for `JwtOptions`, `CorsOptions` and `DatabaseOptions`.

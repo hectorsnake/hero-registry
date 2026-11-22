@@ -16,6 +16,7 @@ COPY ["src/Directory.Build.props", "src/"]
 COPY ["src/HeroRegistry.Domain/HeroRegistry.Domain.csproj", "src/HeroRegistry.Domain/"]
 COPY ["src/HeroRegistry.Application/HeroRegistry.Application.csproj", "src/HeroRegistry.Application/"]
 COPY ["src/HeroRegistry.Infrastructure/HeroRegistry.Infrastructure.csproj", "src/HeroRegistry.Infrastructure/"]
+COPY ["src/HeroRegistry.ServiceDefaults/HeroRegistry.ServiceDefaults.csproj", "src/HeroRegistry.ServiceDefaults/"]
 COPY ["src/HeroRegistry.Api/HeroRegistry.Api.csproj", "src/HeroRegistry.Api/"]
 RUN dotnet restore "src/HeroRegistry.Api/HeroRegistry.Api.csproj"
 COPY src/ src/

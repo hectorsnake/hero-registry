@@ -1,7 +1,11 @@
+using HeroRegistry.Api.OpenApi;
 using HeroRegistry.Application;
 using HeroRegistry.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// OpenTelemetry, health checks, service discovery and HTTP resilience.
+builder.AddServiceDefaults();
 
 builder.Services
     .AddApplication()
@@ -10,21 +14,22 @@ builder.Services
 builder.Services.AddControllers();
 builder.Services.AddAuthorization();
 
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+// OpenAPI document + Scalar API reference (T02.1).
+builder.Services.AddApiDocumentation();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
+// Development only: /openapi/v1.json, /scalar, and "/" redirecting to /scalar.
+app.MapApiDocumentation();
 
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
 app.MapControllers();
+
+// /health (readiness, includes SQL Server) and /alive (liveness).
+app.MapDefaultEndpoints();
 
 // Minimal API: versioned route group -> /api/v1/...
 var v1 = app.MapGroup("/api/v1");

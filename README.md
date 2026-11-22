@@ -46,7 +46,7 @@ It is built with **.NET 10 (ASP.NET Core Web API)** using **Clean Architecture**
 | Layer            | Technology                                                                                   |
 | ---------------- | -------------------------------------------------------------------------------------------- |
 | Front end        | Angular 22, TypeScript, SCSS, Angular Router, Reactive Forms, Signals, Vitest                |
-| API              | ASP.NET Core 10 Web API (controllers), JWT Bearer authentication, OpenAPI                    |
+| API              | ASP.NET Core 10 Web API (controllers), JWT Bearer authentication, OpenAPI with the Scalar API reference |
 | Application      | Use-case services, validators and DTOs (plain C#, no MediatR)                                 |
 | Domain           | Entities, value objects and domain rules (no framework dependencies)                         |
 | Data access      | ADO.NET (`Microsoft.Data.SqlClient`) plus a custom **Reflection-based object mapper**        |
@@ -167,7 +167,7 @@ hero-registry/
 
 ## API endpoints
 
-When the API runs in Development, its OpenAPI document is available at `/openapi/v1.json`.
+In Development, the API publishes an interactive **Scalar API reference** at `/scalar`, generated from the OpenAPI document at `/openapi/v1.json`. The API's base URL (`/`) redirects to it. Starting the API from Visual Studio or Rider (F5), or with `dotnet watch`, opens it automatically. In the Aspire dashboard, use the **Scalar API Reference** link on the `api` resource. Neither endpoint is exposed outside Development.
 
 ### Auth and Users API
 
@@ -193,7 +193,8 @@ When the API runs in Development, its OpenAPI document is available at `/openapi
 
 | Verb | Route      | Auth      | Description  |
 | ---- | ---------- | --------- | ------------ |
-| GET  | `/health`  | Anonymous | Health check |
+| GET  | `/health`  | Anonymous | Readiness: the API and SQL Server are healthy |
+| GET  | `/alive`   | Anonymous | Liveness: the API process is responsive       |
 
 Errors are returned as RFC 9457 **ProblemDetails**. Validation errors use `ValidationProblemDetails`.
 
@@ -206,22 +207,33 @@ Errors are returned as RFC 9457 **ProblemDetails**. Validation errors use `Valid
 | .NET SDK 10                  | Back end and Aspire           |
 | Node.js 22 LTS or later and npm | Angular UI                 |
 | Docker Desktop               | SQL Server container, Aspire and Compose |
-| Aspire CLI (optional)        | `aspire run`                  |
+| Aspire CLI (optional)        | Not required. The AppHost uses the orchestrator and dashboard from NuGet |
 
 ### Run for development (.NET Aspire)
 
-The Aspire AppHost starts SQL Server in a container, the API and the Angular dev server, and wires up their connection strings and URLs.
+The Aspire AppHost starts SQL Server in a container, the API and the Angular dev server, and wires up their connection strings and URLs. Docker Desktop must be running.
 
 ```bash
-# 1. Install the UI dependencies (first run only)
-cd hero-registry-ui && npm install && cd ..
-
-# 2. Start everything
 dotnet run --project HeroRegistry/src/HeroRegistry.AppHost
-#   or: aspire run
 ```
 
-The **Aspire dashboard** URL is printed in the console. It shows each resource's endpoints, logs, traces and metrics. The database schema and seed data are applied automatically when the API starts.
+In Visual Studio, set `HeroRegistry.AppHost` as the startup project and press F5.
+
+| Resource         | URL / address                               | Notes |
+| ---------------- | ------------------------------------------- | ----- |
+| Aspire dashboard | https://localhost:17180 (http://localhost:15180 with `--launch-profile http`) | The login URL with a token is printed in the console |
+| API              | http://localhost:5103                       | `/scalar` (API reference, also the dashboard link), `/health` (includes SQL Server), `/alive`, `/openapi/v1.json` |
+| Angular UI       | http://localhost:4200                       | `/api/*` is proxied to the API (`hero-registry-ui/proxy.conf.mjs`) |
+| SQL Server       | Dynamic port, shown in the dashboard        | Container `sql`, database `HeroRegistryDb` |
+
+How it works:
+
+- **npm packages** are installed automatically before the UI starts.
+- **Secrets are generated on first run** and stored in the AppHost's user secrets, never in source control. These are the SQL Server SA password (`Parameters:sql-password`) and a random 64-character JWT signing key (`Parameters:jwt-key`, passed to the API as `Jwt__Key`). To view them, run `dotnet user-secrets list --project HeroRegistry/src/HeroRegistry.AppHost`.
+- **SQL Server keeps running** after you stop the AppHost (persistent lifetime), and its data lives in the `hero-registry-sql-data` volume. Restarts are fast, and data survives them. To reset everything, run `docker rm -f` on the `sql-*` container, then `docker volume rm hero-registry-sql-data`.
+- **Without Aspire**, you can run the API (`dotnet run --project HeroRegistry/src/HeroRegistry.Api`) and the UI (`npm start` in `hero-registry-ui`) separately. In that case, provide `ConnectionStrings__HeroRegistryDb` yourself.
+
+The database schema and seed data are applied automatically when the API starts (T03).
 
 ### Run for delivery (Docker Compose)
 
