@@ -68,3 +68,63 @@ Content-Type: application/json
 ### Soft-delete a user (administrators only, never yourself) -> 204
 DELETE {{HeroRegistry_Api_HostAddress}}/api/users/2
 Authorization: Bearer {{token}}
+
+###############################################################################
+# Heroes (T10). Uses the token from the login request above.
+###############################################################################
+
+### Search, sort and page: search matches name, first/last name, city or a superpower
+GET {{HeroRegistry_Api_HostAddress}}/api/heroes?search=flight&page=1&pageSize=10&sortBy=PowerLevel&sortDirection=Descending
+Authorization: Bearer {{token}}
+
+### One hero -> 200 (404 if missing or deleted)
+GET {{HeroRegistry_Api_HostAddress}}/api/heroes/1
+Authorization: Bearer {{token}}
+
+### Register a hero -> 201 with a Location header
+# @name createHero
+POST {{HeroRegistry_Api_HostAddress}}/api/heroes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "heroName": "Black Widow",
+  "firstName": "Natasha",
+  "lastName": "Romanoff",
+  "birthDate": "1984-11-22",
+  "email": "black.widow@heroregistry.com",
+  "superpowers": ["Espionage", "Martial arts"],
+  "powerLevel": 75,
+  "address1": "1 Avengers Tower",
+  "address2": null,
+  "city": "Manhattan",
+  "state": "NY",
+  "zipCode": "10001"
+}
+
+###
+@heroId = {{createHero.response.body.$.id}}
+
+### Update the hero -> 200
+PUT {{HeroRegistry_Api_HostAddress}}/api/heroes/{{heroId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "heroName": "Black Widow",
+  "firstName": "Natasha",
+  "lastName": "Romanoff",
+  "birthDate": "1984-11-22",
+  "email": "black.widow@heroregistry.com",
+  "superpowers": ["Espionage", "Martial arts", "Marksmanship"],
+  "powerLevel": 80,
+  "address1": "1 Avengers Tower",
+  "address2": "Floor 93",
+  "city": "Manhattan",
+  "state": "NY",
+  "zipCode": "10001"
+}
+
+### Soft-delete the hero (administrators only) -> 204
+DELETE {{HeroRegistry_Api_HostAddress}}/api/heroes/{{heroId}}
+Authorization: Bearer {{token}}

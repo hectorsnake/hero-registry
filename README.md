@@ -222,11 +222,21 @@ Errors are `application/problem+json` with a stable `code` (for example `user.du
 
 | Verb   | Route                | Auth  | Success | Errors             | Description                                        |
 | ------ | -------------------- | ----- | ------- | ------------------ | -------------------------------------------------- |
-| GET    | `/api/heroes`        | User  | 200     | 400, 401           | Paged list (`search`, `page`, `pageSize`, `sortBy`, `sortDir`) |
-| GET    | `/api/heroes/{id}`   | User  | 200     | 401, 404           | Hero details                                       |
+| GET    | `/api/heroes`        | User  | 200     | 400, 401           | Paged list (`search`, `page`, `pageSize`, `sortBy`, `sortDirection`) |
+| GET    | `/api/heroes/{id}`   | User  | 200     | 401, 404           | Hero details, with the audit trail                 |
 | POST   | `/api/heroes`        | User  | 201     | 400, 401, 409      | Create a hero (returns a `Location` header)        |
-| PUT    | `/api/heroes/{id}`   | User  | 200     | 400, 401, 404, 409 | Update a hero                                      |
+| PUT    | `/api/heroes/{id}`   | User  | 200     | 400, 401, 404, 409 | Update a hero (replaces every editable field)      |
 | DELETE | `/api/heroes/{id}`   | Admin | 204     | 401, 403, 404      | Soft-delete a hero                                 |
+
+List parameters:
+- `search` matches hero name, first name, last name, city or any superpower (contains, ignoring case).
+- `sortBy` is `HeroName` (default), `PowerLevel` or `CreatedAt`.
+- `sortDirection` is `Ascending` (default) or `Descending`.
+- `page` (default 1) and `pageSize` (default 10, maximum 100) are normalized when out of range.
+
+For example: `GET /api/heroes?search=flight&sortBy=PowerLevel&sortDirection=Descending&page=1&pageSize=10`. The response is `{ items, page, pageSize, totalCount, totalPages, hasNextPage, hasPreviousPage }`.
+
+Dates use `yyyy-MM-dd` (`"birthDate": "1977-06-18"`), and `superpowers` is a JSON array of strings.
 
 ### Other endpoints
 
