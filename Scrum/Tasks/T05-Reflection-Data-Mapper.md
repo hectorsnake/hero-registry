@@ -41,6 +41,7 @@ To keep Domain free of persistence concerns, the mapping is configured in Infras
   - `GetByIdAsync`, `ListAsync`, `InsertAsync`, `UpdateAsync`, `SoftDeleteAsync`
   - Protected helpers `QueryAsync<T>(sql, params)` and `ExecuteScalarAsync` for custom queries
   - Async all the way and `CancellationToken`-aware
+  - Instrumented with the `HeroRegistry.Data` `ActivitySource` and `DataAccessLog` from [T02.2](T02.2-Application-Insights-Logging.md): one span and one log per operation, with table, id, row count and elapsed time, and never parameter values
 
 ## Tests (TDD)
 - [ ] Unit tests (no database):
