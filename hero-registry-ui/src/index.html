@@ -1,13 +1,47 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>HeroRegistryUi</title>
-  <base href="/">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
-</head>
-<body>
-  <app-root></app-root>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <title>SuperHero Registry</title>
+    <base href="/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <style>
+      /* Splash while Angular starts and restores the session (F5). Replaced when the app renders. */
+      .splash {
+        display: grid;
+        place-items: center;
+        min-block-size: 100dvh;
+      }
+
+      .splash__spinner {
+        inline-size: 2.5rem;
+        block-size: 2.5rem;
+        border: 0.25rem solid #8884;
+        border-block-start-color: #3355cc;
+        border-radius: 50%;
+        animation: splash-spin 0.8s linear infinite;
+      }
+
+      @keyframes splash-spin {
+        to {
+          transform: rotate(1turn);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .splash__spinner {
+          animation-duration: 3s;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <app-root>
+      <div class="splash" role="progressbar" aria-label="Loading SuperHero Registry">
+        <div class="splash__spinner"></div>
+      </div>
+    </app-root>
+  </body>
 </html>

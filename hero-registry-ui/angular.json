@@ -3,7 +3,10 @@
   "version": 1,
   "cli": {
     "packageManager": "npm",
-    "analytics": "665cfae1-f3e4-4cde-8769-a6808a0124aa"
+    "analytics": "665cfae1-f3e4-4cde-8769-a6808a0124aa",
+    "schematicCollections": [
+      "angular-eslint"
+    ]
   },
   "newProjectRoot": "projects",
   "projects": {
@@ -74,7 +77,37 @@
           "defaultConfiguration": "development"
         },
         "test": {
-          "builder": "@angular/build:unit-test"
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "coverageInclude": [
+              "src/app/core/**/*.ts",
+              "src/app/features/**/*.ts",
+              "src/app/shared/**/*.ts",
+              "src/app/layout/**/*.ts"
+            ],
+            "coverageExclude": [
+              "src/**/*.spec.ts",
+              "src/testing/**"
+            ],
+            "coverageReporters": [
+              "text-summary",
+              "html",
+              "lcovonly"
+            ],
+            "coverageThresholds": {
+              "lines": 80,
+              "branches": 80
+            }
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "src/**/*.ts",
+              "src/**/*.html"
+            ]
+          }
         }
       }
     }

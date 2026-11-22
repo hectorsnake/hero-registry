@@ -1,6 +1,6 @@
 # T12: Angular core (signals-first: auth, interceptors, guards and layout)
 
-**User story:** [US-001](../US-001-SuperHero-Registry.md) (AC9, AC12) · **Layer:** UI (`hero-registry-ui`) · **Estimate:** 7 h · **Depends on:** T09, T09.1
+**User story:** [US-001](../US-001-SuperHero-Registry.md) (AC9, AC12) · **Layer:** UI (`hero-registry-ui`) · **Estimate:** 7 h · **Depends on:** T09, T09.1 · **Status:** Done
 
 ## Goal
 Create the base structure of the Angular 22 app as a **signals-first, zoneless** application: a clean folder layout, signal-based state, HTTP plumbing and a responsive shell. This task also sets the conventions that T13 and T14 follow.
@@ -45,11 +45,11 @@ Test tooling:
 - Test names describe behavior (`'retries the original request once with the new token'`), not methods.
 
 ## Steps
-- [ ] **Project setup:**
+- [x] **Project setup:**
   - Confirm zoneless: `zone.js` stays out of `package.json` and `polyfills`. Keep `provideBrowserGlobalErrorListeners()`.
   - Enable strict templates and strict TypeScript (`strict`, `strictTemplates`, `noPropertyAccessFromIndexSignature`).
   - Add ESLint (`ng add angular-eslint`) with the rules `prefer-signals`, `prefer-on-push-component-change-detection`, `no-input-rename` and `prefer-control-flow`, so the conventions are enforced, not only written down.
-- [ ] **Folder structure** (standalone, feature-based):
+- [x] **Folder structure** (standalone, feature-based):
   ```
   src/app/
   ├── core/
@@ -63,11 +63,11 @@ Test tooling:
   │   └── heroes/    # list, detail, form (T14)
   └── layout/        # shell, navbar
   ```
-- [ ] **`app.config.ts`:**
+- [x] **`app.config.ts`:**
   - `provideHttpClient(withFetch(), withInterceptors([authInterceptor, refreshInterceptor, errorInterceptor]))`.
   - `provideRouter(routes, withComponentInputBinding(), withViewTransitions())`, with lazy-loaded feature routes.
   - `provideAppInitializer(() => inject(AuthService).restoreSession())`.
-- [ ] **`AuthService`** (signal state, in memory):
+- [x] **`AuthService`** (signal state, in memory):
   - Private `#accessToken = signal<string | null>(null)` and `#user = signal<User | null>(null)`.
   - Public read-only signals: `currentUser = this.#user.asReadonly()`, `isAuthenticated = computed(...)` and `isAdmin = computed(...)`.
   - `login(userName, password)`: `POST /api/auth/login`, then set both signals. The browser stores the refresh cookie by itself.
@@ -77,28 +77,28 @@ Test tooling:
   - `clearSession()`: resets both signals without calling the API.
   - `restoreSession()`: one `refresh()` at startup. A failure means "signed out", never an error. Angular waits for it before routing, so guards see the restored session.
   - Multi-tab logout: a `BroadcastChannel('hero-registry-auth')`, opened in the service and closed with `DestroyRef`. `logout()` posts `"logout"`, and other tabs call `clearSession()` and go to `/login`. No token is ever sent on the channel.
-- [ ] **Splash on start/F5:** a lightweight CSS spinner inside `<app-root>` in `index.html`, replaced when Angular renders.
-- [ ] **`authInterceptor`** (functional): adds `Authorization: Bearer <token>` only to `/api` requests, only when a token exists, and never to `/api/auth/login`, `register`, `refresh` or `logout`. It reads the signal directly (`auth.accessToken()`).
-- [ ] **`refreshInterceptor`** (functional):
+- [x] **Splash on start/F5:** a lightweight CSS spinner inside `<app-root>` in `index.html`, replaced when Angular renders.
+- [x] **`authInterceptor`** (functional): adds `Authorization: Bearer <token>` only to `/api` requests, only when a token exists, and never to `/api/auth/login`, `register`, `refresh` or `logout`. It reads the signal directly (`auth.accessToken()`).
+- [x] **`refreshInterceptor`** (functional):
   - On a **401** from a non-auth `/api` request, call `auth.refresh()` and **retry the original request once** with the new token.
   - Retried requests carry an `HttpContextToken` (`RETRIED`), so they are never retried twice.
   - If the refresh fails: `clearSession()` and navigate to `/login?returnUrl=<current url>`, with the toast "Your session has expired. Please sign in again."
-- [ ] **`errorInterceptor`** (functional):
+- [x] **`errorInterceptor`** (functional):
   - **403** shows "You don't have permission to do that".
   - **0 / 5xx** shows a toast with the ProblemDetails `title` (T11). It never shows raw server text.
   - **400 / 409** pass through to the forms (T13, T14).
   - 401 is owned by `refreshInterceptor`.
-- [ ] **API helpers (`core/api`):**
+- [x] **API helpers (`core/api`):**
   - `ProblemDetails` and `ValidationProblemDetails` types that match the API (T11): `title`, `status`, `code`, `traceId` and `errors`.
   - `toFieldErrors(problem)`: maps the camelCase `errors` dictionary to form fields. T13 and T14 use it with Signal Forms to show server errors next to the right field.
   - The API base URL `/api` is proxied in development (Aspire) and served by nginx in Docker. No `withCredentials` and no CORS credentials, because everything is same-origin, so the browser sends the `SameSite=Strict` cookie automatically.
-- [ ] **Data-fetching pattern** (reference implementation for T14):
+- [x] **Data-fetching pattern** (reference implementation for T14):
   - Document in `core/api/README.md`: reads use `httpResource(() => ({ url, params }))` with signal parameters, so changing `search()` or `page()` refetches automatically and cancels the previous request. Writes use `HttpClient` followed by `resource.reload()`.
   - Example: `currentUser` details from `GET /api/auth/me` with `httpResource`, shown in the navbar's profile menu.
-- [ ] **`ToastService`** (signals): a `toasts` signal of `{ id, kind, text }`, with `show()` and `dismiss()` and auto-dismiss after about 5 s. A `<app-toast-outlet>` in the shell renders it with `@for` and `aria-live="polite"`.
-- [ ] **`ViewportService`** (signals): an `isMobile` signal from `matchMedia('(max-width: 768px)')`, with the listener cleaned up by `DestroyRef`. This avoids adding `@angular/cdk` only for breakpoints.
-- [ ] **Guards** (functional `CanActivateFn`): `authGuard` (reads `isAuthenticated()`) and `adminGuard` (reads `isAdmin()`). Both return a `UrlTree` to `/login?returnUrl=...`, or to `/heroes` for a non-admin.
-- [ ] **Responsive layout:**
+- [x] **`ToastService`** (signals): a `toasts` signal of `{ id, kind, text }`, with `show()` and `dismiss()` and auto-dismiss after about 5 s. A `<app-toast-outlet>` in the shell renders it with `@for` and `aria-live="polite"`.
+- [x] **`ViewportService`** (signals): an `isMobile` signal from `matchMedia('(max-width: 768px)')`, with the listener cleaned up by `DestroyRef`. This avoids adding `@angular/cdk` only for breakpoints.
+- [x] **Guards** (functional `CanActivateFn`): `authGuard` (reads `isAuthenticated()`) and `adminGuard` (reads `isAdmin()`). Both return a `UrlTree` to `/login?returnUrl=...`, or to `/heroes` for a non-admin.
+- [x] **Responsive layout:**
   - `ShellComponent` and `NavbarComponent` use `input()` / `output()` and OnPush (the default).
   - The navbar shows the user name, an admin badge (`@if (auth.isAdmin())`) and logout. A collapsible menu is driven by `isMobile()` and a local `menuOpen = signal(false)`.
   - Mobile-first SCSS with CSS custom properties (light and dark), or Angular Material. Choose one and stay consistent.
@@ -110,26 +110,26 @@ Zoneless testing rules:
 - Use `await fixture.whenStable()` or `TestBed.tick()` after changing signals, and read signal values directly in assertions.
 - For HTTP, use `provideHttpClient()` + `provideHttpClientTesting()` + `HttpTestingController`, then `TestBed.tick()` so `httpResource` issues its request.
 
-- [ ] **`AuthService`:**
+- [x] **`AuthService`:**
   - Login stores the token in memory and updates `currentUser`, `isAuthenticated` and `isAdmin`.
   - **Nothing is written to `localStorage` or `sessionStorage`** (spy on both).
   - Logout calls the API and clears the signals.
   - `restoreSession()`: a successful refresh restores the user, and a 401 leaves the app signed out without throwing.
   - Parallel `refresh()` calls produce **one** HTTP request.
   - `auth.refresh_race` is retried once.
-- [ ] **`authInterceptor`:** adds the header only when a token exists and only for `/api`, and never for the `/api/auth/*` token endpoints.
-- [ ] **`refreshInterceptor`:**
+- [x] **`authInterceptor`:** adds the header only when a token exists and only for `/api`, and never for the `/api/auth/*` token endpoints.
+- [x] **`refreshInterceptor`:**
   - 401, then refresh, then the retried request carries the new token and succeeds.
   - Two parallel 401s cause one refresh and two retries.
   - A failed refresh calls `clearSession()` and navigates to `/login?returnUrl=...`.
   - A retried request that gets 401 again is not retried a second time.
-- [ ] **`errorInterceptor`:** 403 and 5xx push a toast, and 400 and 409 pass through.
-- [ ] **`toFieldErrors`:** maps `errors.heroName` to the `heroName` field, ignores unknown keys, and handles a ProblemDetails with no `errors`.
-- [ ] **`ToastService`:** `show` adds a toast, auto-dismiss removes it (Vitest fake timers), and `dismiss` removes it.
-- [ ] **`ViewportService`:** `isMobile` follows a mocked `matchMedia` change.
-- [ ] **Multi-tab:** a `"logout"` message on the channel clears the session.
-- [ ] **Guards:** allow or redirect correctly, including `returnUrl`.
-- [ ] **`NavbarComponent`:** the admin badge appears only when `isAdmin()` is true, and the logout button calls `AuthService.logout()`.
+- [x] **`errorInterceptor`:** 403 and 5xx push a toast, and 400 and 409 pass through.
+- [x] **`toFieldErrors`:** maps `errors.heroName` to the `heroName` field, ignores unknown keys, and handles a ProblemDetails with no `errors`.
+- [x] **`ToastService`:** `show` adds a toast, auto-dismiss removes it (Vitest fake timers), and `dismiss` removes it.
+- [x] **`ViewportService`:** `isMobile` follows a mocked `matchMedia` change.
+- [x] **Multi-tab:** a `"logout"` message on the channel clears the session.
+- [x] **Guards:** allow or redirect correctly, including `returnUrl`.
+- [x] **`NavbarComponent`:** the admin badge appears only when `isAdmin()` is true, and the logout button calls `AuthService.logout()`.
 
 ## Done when
 - The app runs zoneless (no `zone.js` in the bundle), and ESLint passes with the signal and OnPush rules.
@@ -138,6 +138,51 @@ Zoneless testing rules:
 - Logging out in one tab logs out the others.
 - `npm test`, `npm run lint` and `npm run build` pass with no warnings, and the browser console is clean.
 - **TDD evidence:** every spec listed in Tests exists and was red before its implementation (recorded in the Implementation notes). `npm run test:coverage` meets the 80% line and branch thresholds for `core`.
+
+## Implementation notes
+
+### TDD evidence (red → green)
+Each spec was written first and run alone (`npm test -- --watch=false --include=<path>`) before any implementation existed. "Compile" means the build failed with `TS2307: Cannot find module`, because the unit did not exist yet.
+
+| # | Unit | Specs | Red run | Green |
+| - | ---- | ----- | ------- | ----- |
+| 1 | `core/api/problem-details` (`toFieldErrors`, `isProblemDetails`, `problemTitle`) | 18 | 18 failed (compile) | 18/18 |
+| 2 | `core/ui/ToastService` + `ViewportService` | 7 + 5 | 12 failed (compile) | 12/12 |
+| 3 | `core/auth/AuthService` | 23 | 23 failed (compile) | 23/23 |
+| 4 | `authInterceptor`, `refreshInterceptor`, `errorInterceptor` | 8 + 10 + 9 | 27 failed (compile) | 27/27 |
+| 5 | `authGuard` / `adminGuard` + `profileResource` (`GET /api/auth/me`) | 5 + 2 | 7 failed (compile) | 7/7 |
+| 6 | `shared/ToastOutlet` | 3 | 3 failed (compile) | 3/3 |
+| 7 | `layout/Navbar` | 8 | 8 failed (compile) | 8/8 after a spec fix (see below) |
+| 8 | `layout/Shell` (regression found in the smoke test) | 1 | 1 failed: `expected 'Heroespage' to contain 'SuperHero Registry'` | 1/1 |
+| 9 | `AuthService`: cross-tab logout in a hidden tab (found in the smoke test) | +1 | 1 failed: `expected "navigate" to not be called at all, but actually been called 1 times` | 24/24 |
+
+Final run: **14 files, 116 tests passed**. Coverage of `core`, `features`, `shared` and `layout`: 97.6% lines and 96.6% branches. The threshold is 80% lines and 80% branches. Raising it to 99% makes `npm run test:coverage` fail with exit 1, so the threshold is enforced.
+
+### Exceptions and corrections (for transparency)
+- **`auth-urls.ts` is test-after.** Its helpers (`isApiRequest`, `isTokenEndpoint`) were written together with `AuthService`, before their own spec. To prove the 15 specs added afterwards are meaningful, two mutants were applied (`url.includes('/api/')`, and a prefix match for token endpoints). The run went red, with 2 failed: `expected true to be false`. The original was then restored and the run went green (15/15).
+- **Spec bugs found on the way to green:**
+  - The error-interceptor helper typed the flush body as `unknown`, a compile error in the spec (TS2345).
+  - The first Navbar green run timed out, because the spec awaited `whenStable()` while the `httpResource` request was still pending. The spec now calls `TestBed.tick()` and flushes before awaiting.
+  - In both cases the spec was fixed, not the code.
+- **The placeholder `app.spec.ts`** (it asserted "Hello, hero-registry-ui") was replaced by a spec of the real `App`, which renders the router outlet.
+
+### Smoke test (real API through the dev proxy, Chrome)
+- **Signed out:** `/heroes` redirects to `/login?returnUrl=%2Fheroes`, with the title "Sign in · SuperHero Registry".
+- **Session after F5:** after a sign-in, loading `/heroes` restores the session from the cookie alone. The navbar shows Admin, the admin badge and the email from `/api/auth/me`.
+- **Storage:** `document.cookie` does not expose `hr_refresh` (HttpOnly). The app writes nothing to localStorage. The only key found there belongs to another app previously served on localhost:4200.
+- **Zoneless:** `window.Zone` is undefined, and `zone.js` is absent from the production bundle.
+- **Multi-tab logout:** logging out in one tab moved the second tab to `/login`.
+- **API flow:** through the proxy, login returns a `Set-Cookie` with HttpOnly, Secure, SameSite=Strict and `Path=/api/auth`, and the body has no refresh token. Refresh rotates the cookie, the new token works on `/me`, and logout returns 204, after which a refresh gets 401 `auth.refresh_invalid`.
+- **Two bugs found and fixed test-first** (rows 8 and 9):
+  1. `withComponentInputBinding()` reset the routed `Shell`'s `appName` input to `undefined`, so routed layouts now take no inputs.
+  2. A tab that is hidden cannot run the router's view transition, so a cross-tab logout clears the session at once and navigates when the tab is shown again.
+- **Known dev-only message:** when a tab is *opened* in the background, its first navigation logs `InvalidStateError: Transition was aborted ... Document hidden` from the router's view-transition support. Angular prints this only in dev mode, the navigation still completes, and the router has no public option to skip a single transition.
+
+### Decisions
+- **Styling:** plain SCSS with design tokens (CSS custom properties, light and dark) in `styles.scss`, no Angular Material. Components use BEM and data attributes for variants.
+- **Lint:** besides the four rules required here, `prefer-inject`, `prefer-host-metadata-property` and `template/prefer-self-closing-tags` are on. TypeScript runs with `strict`, and templates with `strictTemplates` and `typeCheckHostBindings`.
+- **Placeholders:** `features/auth/login` and `features/heroes/hero-list` are placeholders with no logic, so the routes, guards and shell are real. T13 and T14 replace them.
+- **Interceptor order:** `[authInterceptor, refreshInterceptor, errorInterceptor]`. Retried requests are re-sent by `refreshInterceptor` with the new token and the `RETRIED` context flag, so a request is never retried twice. Because `errorInterceptor` is innermost, it never sees a 401 it would have to ignore twice.
 
 ## Presentation notes
 - **Signals:** "The app is zoneless and OnPush. Every piece of UI state is a signal or a computed value, reads use `httpResource`, forms use Signal Forms, and RxJS is kept for streams such as the token refresh in the interceptors."

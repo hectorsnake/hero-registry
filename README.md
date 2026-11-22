@@ -46,7 +46,7 @@ It is built with **.NET 10 (ASP.NET Core Web API)** using **Clean Architecture**
 
 | Layer            | Technology                                                                                   |
 | ---------------- | -------------------------------------------------------------------------------------------- |
-| Front end        | Angular 22, TypeScript, SCSS, Angular Router, Reactive Forms, Signals, Vitest                |
+| Front end        | Angular 22 (zoneless, signals-first), TypeScript, SCSS, Angular Router, Signal Forms, `httpResource`, Vitest, ESLint                |
 | API              | ASP.NET Core 10 Web API (controllers), JWT Bearer authentication, OpenAPI with the Scalar API reference |
 | Application      | Use-case services, validators and DTOs (plain C#, no MediatR)                                 |
 | Domain           | Entities, value objects and domain rules (no framework dependencies)                         |
@@ -434,8 +434,11 @@ dotnet test --solution HeroRegistry/HeroRegistry.slnx
 # Back end with coverage (Cobertura report in each project's TestResults folder)
 dotnet test --solution HeroRegistry/HeroRegistry.slnx --coverage --coverage-output-format cobertura
 
-# Front end
-cd hero-registry-ui && npm test
+# Front end (Vitest, zoneless): single run, coverage (fails below 80% lines or branches), lint
+cd hero-registry-ui
+npm run test:ci
+npm run test:coverage
+npm run lint
 ```
 
 | Test project                | Scope                                                                   |

@@ -1,0 +1,40 @@
+<header class="navbar">
+  <a class="navbar__brand" routerLink="/heroes">{{ appName() }}</a>
+
+  @if (isMobile()) {
+    <button
+      type="button"
+      class="navbar__toggle"
+      aria-label="Menu"
+      aria-controls="navbar-menu"
+      [attr.aria-expanded]="menuOpen()"
+      (click)="toggleMenu()"
+    >
+      ☰
+    </button>
+  }
+
+  <nav id="navbar-menu" class="navbar__menu" aria-label="Main" [hidden]="!menuVisible()">
+    <a
+      class="navbar__link"
+      routerLink="/heroes"
+      routerLinkActive
+      ariaCurrentWhenActive="page"
+      (click)="menuOpen.set(false)"
+      >Heroes</a
+    >
+
+    @if (auth.currentUser(); as user) {
+      <div class="navbar__profile">
+        <span class="navbar__user">{{ user.userName }}</span>
+        @if (auth.isAdmin()) {
+          <span class="navbar__badge" aria-label="Administrator">Admin</span>
+        }
+        @if (profile.value(); as details) {
+          <span class="navbar__email">{{ details.email }}</span>
+        }
+      </div>
+      <button type="button" class="navbar__logout" (click)="logout()">Log out</button>
+    }
+  </nav>
+</header>
