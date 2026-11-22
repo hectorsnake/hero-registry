@@ -40,7 +40,7 @@ It is built with **.NET 10 (ASP.NET Core Web API)** using **Clean Architecture**
 - **Audit trail:** every record stores `CreatedBy`, `CreatedAt`, `UpdatedBy` and `UpdatedAt`.
 - **Business validation:** unique hero name and email, a power level from 1 to 100, a valid US address, a birth date in the past, and more.
 - **Responsive UI:** the Angular SPA works on desktop and mobile.
-- **Seeded demo data:** demo users and sample heroes are created on first start.
+- **Seeded demo data:** an administrator account and three heroes (Captain America, Spider-Man and Superman) are created on first start.
 
 ## Tech stack
 
@@ -167,6 +167,27 @@ hero-registry/
 | UpdatedBy   | INT NULL        | FK to `Users.Id`                                   |
 | UpdatedAt   | DATETIME2 NULL  | UTC                                                |
 
+Uniqueness (user name, hero name and both emails) ignores case and applies to **active** rows only. A soft-deleted row frees its values. These rules are enforced in the business layer and again by the database as a last line of defense (filtered unique indexes and CHECK constraints).
+
+### Schema migrations
+
+The schema and the demo data are created by versioned SQL scripts in `HeroRegistry/src/HeroRegistry.Infrastructure/Persistence/Scripts/`: `0001_CreateUsers.sql`, `0002_CreateSuperHeroes.sql` and `0003_SeedData.sql` (the administrator and three heroes). The API applies them **automatically when it starts**, under both Aspire and Docker Compose, through a small in-house runner, because Entity Framework migrations are not used. The runner:
+
+- creates the database if it doesn't exist;
+- records each applied script and its checksum in `dbo.SchemaVersions`;
+- applies each pending script in its own transaction (all or nothing);
+- retries while SQL Server is still starting;
+- serializes concurrent startups;
+- refuses to start if an already applied script was edited.
+
+To change the schema, **add a new numbered script**. Never edit an applied one.
+
+| Setting                          | Default    | Purpose |
+| -------------------------------- | ---------- | ------- |
+| `Database:MigrateOnStartup`      | `true`     | Apply pending scripts when the API starts |
+| `Database:MigrationMaxAttempts`  | `10`       | Attempts while SQL Server is not reachable yet |
+| `Database:MigrationRetryDelay`   | `00:00:03` | Wait between attempts |
+
 ## API endpoints
 
 In Development, the API publishes an interactive **Scalar API reference** at `/scalar`, generated from the OpenAPI document at `/openapi/v1.json`. The API's base URL (`/`) redirects to it. Starting the API from Visual Studio or Rider (F5), or with `dotnet watch`, opens it automatically. In the Aspire dashboard, use the **Scalar API Reference** link on the `api` resource. Neither endpoint is exposed outside Development.
@@ -235,7 +256,7 @@ How it works:
 - **SQL Server keeps running** after you stop the AppHost (persistent lifetime), and its data lives in the `hero-registry-sql-data` volume. Restarts are fast, and data survives them. To reset everything, run `docker rm -f` on the `sql-*` container, then `docker volume rm hero-registry-sql-data`.
 - **Without Aspire**, you can run the API (`dotnet run --project HeroRegistry/src/HeroRegistry.Api`) and the UI (`npm start` in `hero-registry-ui`) separately. In that case, provide `ConnectionStrings__HeroRegistryDb` yourself.
 
-The database schema and seed data are applied automatically when the API starts (T03).
+The database schema and the demo seed data are applied automatically when the API starts (see [Schema migrations](#schema-migrations)).
 
 ### Run for delivery (Docker Compose)
 
@@ -254,12 +275,15 @@ To stop the stack: `docker compose down`. To also remove the database volume: `d
 
 ### Demo credentials
 
-| Role          | User name | Password       |
-| ------------- | --------- | -------------- |
-| Administrator | `admin`   | `Admin@12345`  |
-| Regular user  | `demo`    | `Demo@12345`   |
+| Role          | User name | Password | Email                    |
+| ------------- | --------- | -------- | ------------------------ |
+| Administrator | `Admin`   | `Admin`  | `admin@heroregistry.com` |
 
-These accounts are for demo purposes only. Change them, and the JWT key, for any real deployment.
+To try the regular-user experience (for example, a regular user can't delete heroes), register a new account from the login page.
+
+This account is for demo purposes only. Its password is weaker than the registration policy allows, and it is stored in `0003_SeedData.sql` as a BCrypt hash, never as plain text. For any shared or real deployment, replace it (with a new numbered script containing a new hash) and change the JWT key.
+
+**Seeded heroes:** Captain America, Spider-Man and Superman.
 
 ## Logging and telemetry (Application Insights)
 

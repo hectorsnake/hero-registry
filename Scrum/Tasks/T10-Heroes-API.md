@@ -19,8 +19,9 @@ Expose the hero CRUD endpoints with correct HTTP verbs, parameters, status codes
 
 ## Tests (TDD, `WebApplicationFactory`)
 - [ ] Every endpoint returns 401 without a token.
-- [ ] Full CRUD flow as `demo`: create (201 and Location), get, update, then list contains the hero.
-- [ ] `DELETE` as `demo` returns 403. As `admin` it returns 204, and a later `GET` returns 404.
+- [ ] Full CRUD flow as a regular user (registered by the test): create (201 and Location), get, update, then list contains the hero.
+- [ ] `DELETE` as a regular user returns 403. As `Admin` it returns 204, and a later `GET` returns 404.
+- [ ] The seeded heroes (Captain America, Spider-Man, Superman) are listed and searchable, for example by searching for "Flight".
 - [ ] Validation returns 400 with field errors. A duplicate hero name returns 409.
 - [ ] Paging and search query strings are bound correctly.
 - [ ] The created hero has `createdBy` equal to the id of the caller.

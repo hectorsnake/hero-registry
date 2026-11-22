@@ -22,9 +22,9 @@ Expose the second API for user creation, login and user management, with both au
 
 ## Tests (TDD, `WebApplicationFactory` with Testcontainers SQL Server or a fake repository)
 - [ ] Register returns 201, and registering the same user again returns 409. Invalid input returns 400 with an `errors` dictionary.
-- [ ] Login with the seeded `demo` user returns 200 with a token. A bad password returns 401.
+- [ ] Login with the seeded `Admin` / `Admin` returns 200 with a token that has the `Admin` role, and a newly registered user gets the `User` role. A bad password returns 401.
 - [ ] `GET /api/auth/me` returns 401 without a token and 200 with one.
-- [ ] `GET /api/users` returns 403 for `demo` and 200 for `admin`.
+- [ ] `GET /api/users` returns 403 for a regular user (registered by the test) and 200 for `Admin`.
 
 ## Done when
 - All endpoints behave as in the README's endpoint tables, and the API tests pass.

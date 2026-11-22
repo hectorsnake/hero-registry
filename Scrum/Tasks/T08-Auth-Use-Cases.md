@@ -14,7 +14,7 @@ Implement user sign-up and login: business rules in Application, and cryptograph
   - `AuthService.LoginAsync`: look up the user by user name (case-insensitive) and verify the password. A missing user, a deleted user and a wrong password all return the **same** `Unauthorized` error. Hash a dummy password when the user is missing, to resist timing attacks.
   - `UserService.ListAsync` and `UserService.DeleteAsync` (admin only; an admin cannot delete themselves).
 - [ ] Infrastructure:
-  - `BCryptPasswordHasher` (BCrypt.Net-Next, work factor 11 or higher)
+  - `BCryptPasswordHasher` (BCrypt.Net-Next 4.2.0, already pinned in `Directory.Packages.props`, work factor 11 or higher). It must verify the seeded administrator's `$2a$11$` hash from `0003_SeedData.sql` (T03.1). Add a test that `Verify("Admin", seededHash)` succeeds.
   - `JwtTokenService`: claims `sub` (user id), `unique_name` and `role` (`Admin` or `User`). HMAC-SHA256, expiration from `JwtOptions` (issuer, audience, key, minutes).
   - Validate `JwtOptions` on start (`ValidateOnStart`); the key must be at least 32 bytes.
 

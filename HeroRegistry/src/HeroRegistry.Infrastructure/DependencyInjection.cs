@@ -1,6 +1,6 @@
-using System.Globalization;
 using HeroRegistry.Infrastructure.Persistence;
 using HeroRegistry.Infrastructure.Persistence.Diagnostics;
+using HeroRegistry.Infrastructure.Persistence.Migrations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -18,19 +18,16 @@ public static class DependencyInjection
         ArgumentNullException.ThrowIfNull(configuration);
 
         services.AddOptions<DatabaseOptions>()
+            .Bind(configuration.GetSection(DatabaseOptions.SectionName))
             .Configure(options =>
-            {
                 options.ConnectionString =
-                    configuration.GetConnectionString(DatabaseOptions.ConnectionStringName) ?? string.Empty;
-
-                if (int.TryParse(configuration[DatabaseOptions.SlowCommandThresholdKey],
-                        NumberStyles.Integer, CultureInfo.InvariantCulture, out var thresholdMs))
-                {
-                    options.SlowCommandThresholdMs = thresholdMs;
-                }
-            })
+                    configuration.GetConnectionString(DatabaseOptions.ConnectionStringName) ?? string.Empty)
             .Validate(options => options.SlowCommandThresholdMs >= 0,
-                $"'{DatabaseOptions.SlowCommandThresholdKey}' cannot be negative.");
+                $"'{DatabaseOptions.SlowCommandThresholdKey}' cannot be negative.")
+            .Validate(options => options.MigrationMaxAttempts >= 1,
+                "'Database:MigrationMaxAttempts' must be at least 1.")
+            .Validate(options => options.MigrationRetryDelay >= TimeSpan.Zero,
+                "'Database:MigrationRetryDelay' cannot be negative.");
 
         services.AddHealthChecks()
             .AddCheck<SqlServerHealthCheck>(SqlServerHealthCheck.Name);
@@ -38,6 +35,10 @@ public static class DependencyInjection
         // Data-layer timer: spans (HeroRegistry.Data) and structured logs for every DB operation (T02.2).
         services.TryAddSingleton(TimeProvider.System);
         services.AddSingleton<DataAccessInstrumentation>();
+
+        // Schema migrations, applied when the API starts (T03).
+        services.AddSingleton<IDatabaseMigrator, DatabaseMigrator>();
+        services.AddHostedService<DatabaseInitializer>();
 
         // Connection factory, Reflection mapper, repositories (T05, T06),
         // password hasher and token service (T08) are registered here.

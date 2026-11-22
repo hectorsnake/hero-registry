@@ -19,7 +19,7 @@ Deliver the whole system so that it runs with a single `docker compose up --buil
 - [ ] Add `.env.example` (committed) and add `.env` to `.gitignore`.
 - [ ] Application Insights ([T02.2](T02.2-Application-Insights-Logging.md)): pass `APPLICATIONINSIGHTS_CONNECTION_STRING` to the `api` service from `.env`. In `.env.example`, leave it **empty**, which disables it. Never use a placeholder: a non-empty invalid value stops the API at startup. Also set `OTEL_SERVICE_NAME=hero-registry-api`, so Application Insights shows a clear cloud role name.
 - [ ] Add `.dockerignore` files for both images (`bin`, `obj`, `node_modules`, `.angular`).
-- [ ] The API runs the migrations and seeding on startup (T03), so no manual database step is needed.
+- [ ] The API runs the migrations (T03) and seeding (T03.1) on startup, so no manual database step is needed. Its startup retries cover SQL Server still booting, in addition to `depends_on: service_healthy`.
 
 ## Tests
 - [ ] Manual smoke test on a clean environment:

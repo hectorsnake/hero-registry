@@ -2,7 +2,7 @@
 
   <!--
     Infrastructure layer: implements the Application ports
-    (Reflection-based data mapper, SQL Server repositories, hashing, JWT).
+    (Reflection-based data mapper, SQL Server repositories, migrations, hashing, JWT).
   -->
 
   <ItemGroup>
@@ -14,8 +14,21 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" />
+    <!-- IHostedService: migrations run when the API starts. -->
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <!-- OptionsBuilder.Bind: the "Database" configuration section. -->
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
     <!-- SuppressInstrumentationScope: keeps health-check queries out of telemetry. -->
     <PackageReference Include="OpenTelemetry" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Versioned migration scripts, embedded with a stable name: Scripts/0001_CreateUsers.sql, ... -->
+    <EmbeddedResource Include="Persistence\Scripts\*.sql" LogicalName="Scripts/%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="HeroRegistry.Infrastructure.Tests" />
   </ItemGroup>
 
 </Project>

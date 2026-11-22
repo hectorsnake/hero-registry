@@ -82,7 +82,7 @@
 - Server validation errors (`400`, `409`) are shown next to the relevant fields. A `401` response redirects to the login page.
 
 ### AC10: Demo readiness
-- On first start, the database is created, migrated and seeded with an admin user, a regular user and at least 10 sample heroes.
+- On first start, the database is created, migrated and seeded with an administrator (`Admin` / `Admin`, `admin@heroregistry.com`) and three heroes: Captain America, Spider-Man and Superman.
 - The whole system starts with **one command** for development (.NET Aspire) and **one command** for delivery (`docker compose up`).
 
 ---
@@ -165,7 +165,8 @@
 | T02 | [.NET Aspire orchestration (AppHost and ServiceDefaults)](Tasks/T02-Aspire-Orchestration.md)  | DevOps          | 3 h      | T01        |
 | T02.1 | [OpenAPI document and Scalar API reference](Tasks/T02.1-OpenAPI-Scalar.md)                  | API             | 2 h      | T02        |
 | T02.2 | [Logging and telemetry with Azure Application Insights](Tasks/T02.2-Application-Insights-Logging.md) | Cross-cutting | 4 h | T02 (DB part with T05, T06) |
-| T03 | [Database schema, migration runner and seed data](Tasks/T03-Database-Schema-Migrations-Seed.md) | Infrastructure | 4 h     | T01        |
+| T03 | [Database schema and migration runner](Tasks/T03-Database-Schema-Migrations.md)               | Infrastructure  | 4 h      | T01, T02   |
+| T03.1 | [Seed data (administrator and demo heroes)](Tasks/T03.1-Seed-Data.md)                       | Infrastructure  | 2 h      | T03        |
 | T04 | [Domain model: entities and invariants](Tasks/T04-Domain-Model.md)                            | Domain          | 3 h      | T01        |
 | T05 | [Reflection-based data mapper](Tasks/T05-Reflection-Data-Mapper.md)                           | Infrastructure  | 8 h      | T03, T04   |
 | T06 | [Hero and User repositories](Tasks/T06-Repositories.md)                                       | Infrastructure  | 5 h      | T05        |
@@ -181,14 +182,14 @@
 | T16 | [CI pipeline (GitHub Actions)](Tasks/T16-CI-Pipeline.md)                                      | DevOps          | 2 h      | T01        |
 | T17 | [Documentation, GenAI write-up and presentation](Tasks/T17-Documentation-Presentation.md)     | Docs            | 4 h      | all        |
 
-**Total estimate:** about 84 hours.
+**Total estimate:** about 86 hours.
 
 ### Suggested order
 
 | Phase | Tasks | Focus |
 | ----- | ----- | ----- |
 | 1. Foundation   | T01, T02, T02.1, T02.2, T16 | Solution skeleton, Aspire, OpenAPI and Scalar, Application Insights, CI |
-| 2. Core         | T03, T04, T07, T08  | Schema, domain and business rules (TDD) |
+| 2. Core         | T03, T03.1, T04, T07, T08 | Schema, seed data, domain and business rules (TDD) |
 | 3. Persistence  | T05, T06            | Reflection mapper and repositories |
 | 4. API          | T11, T09, T10       | Cross-cutting concerns, Auth/Users API, Heroes API |
 | 5. UI           | T12, T13, T14       | Angular core, auth pages, hero management |

@@ -18,7 +18,7 @@ Let visitors create an account and log in.
   - On success, logs in automatically (or redirects to login with a success message).
 - [ ] Shared `FormFieldErrorComponent` to render validation messages consistently.
 - [ ] Accessibility: labels, `autocomplete` attributes and keyboard submit.
-- [ ] Demo hint on the login page ("Try admin / Admin@12345"), shown only in non-production builds.
+- [ ] Demo hint on the login page ("Try Admin / Admin"), shown only in non-production builds.
 
 ## Tests (TDD)
 - [ ] The form is invalid while empty. Password mismatch and weak passwords produce errors.
