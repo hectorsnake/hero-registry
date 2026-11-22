@@ -8,6 +8,7 @@ Expose the second API for user creation, login and user management, with both au
 ## Steps
 - [ ] Configure JWT Bearer authentication from `JwtOptions`. Add an authorization policy `AdminOnly` (`role = Admin`). Set a fallback policy that requires an authenticated user.
 - [ ] `HttpCurrentUser : ICurrentUser` reads the claims from `IHttpContextAccessor`.
+- [ ] Telemetry ([T02.2](T02.2-Application-Insights-Logging.md)): tag request spans with the user id (`enduser.id`), never the user name or email, so Application Insights can filter requests by user.
 - [ ] `AuthController` (`/api/auth`):
   - `POST register` (`[AllowAnonymous]`): returns 201 + `UserResponse`, 400 or 409.
   - `POST login` (`[AllowAnonymous]`): returns 200 + `AuthResponse` or 401.

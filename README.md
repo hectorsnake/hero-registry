@@ -20,10 +20,11 @@ It is built with **.NET 10 (ASP.NET Core Web API)** using **Clean Architecture**
    - [Run for development (.NET Aspire)](#run-for-development-net-aspire)
    - [Run for delivery (Docker Compose)](#run-for-delivery-docker-compose)
    - [Demo credentials](#demo-credentials)
-8. [Testing](#testing)
-9. [Design decisions](#design-decisions)
-10. [Generative AI usage](#generative-ai-usage)
-11. [Project management](#project-management)
+8. [Logging and telemetry (Application Insights)](#logging-and-telemetry-application-insights)
+9. [Testing](#testing)
+10. [Design decisions](#design-decisions)
+11. [Generative AI usage](#generative-ai-usage)
+12. [Project management](#project-management)
 
 ---
 
@@ -52,6 +53,7 @@ It is built with **.NET 10 (ASP.NET Core Web API)** using **Clean Architecture**
 | Data access      | ADO.NET (`Microsoft.Data.SqlClient`) plus a custom **Reflection-based object mapper**        |
 | Database         | SQL Server 2022                                                                              |
 | Dev orchestration| .NET Aspire (AppHost and ServiceDefaults: SQL Server, API and Angular with one command)      |
+| Observability    | OpenTelemetry → Aspire dashboard and **Azure Application Insights** (requests, SQL dependencies, structured logs) |
 | Delivery         | Docker and Docker Compose                                                                    |
 | Testing          | xUnit v3 (Microsoft.Testing.Platform), NSubstitute, Shouldly, Testcontainers (SQL Server), `WebApplicationFactory`, Vitest |
 | CI               | GitHub Actions                                                                               |
@@ -258,6 +260,63 @@ To stop the stack: `docker compose down`. To also remove the database volume: `d
 | Regular user  | `demo`    | `Demo@12345`   |
 
 These accounts are for demo purposes only. Change them, and the JWT key, for any real deployment.
+
+## Logging and telemetry (Application Insights)
+
+The API's telemetry goes through one OpenTelemetry pipeline and can be sent to two destinations at the same time: the **Aspire dashboard** (development) and **Azure Application Insights**.
+
+| What is collected            | Source                                                     | Application Insights table |
+| ---------------------------- | ---------------------------------------------------------- | -------------------------- |
+| Requests to endpoints        | ASP.NET Core instrumentation (health probes are excluded)  | `requests`                 |
+| SQL commands                 | SqlClient instrumentation (client-side)                    | `dependencies` (type SQL)  |
+| Data-layer operations, timed | `DataAccessInstrumentation` (`HeroRegistry.Data` spans)    | `dependencies`             |
+| Structured logs              | `ILogger`, including `DataAccessLog` (inserts, selects, updates, soft deletes, slow queries, failures) | `traces` |
+
+### Enable it
+
+Application Insights is **on only when `APPLICATIONINSIGHTS_CONNECTION_STRING` is set**. Without it, the API, the tests and CI run normally.
+
+```bash
+# Development (user secrets of the API project; also used when running under Aspire)
+dotnet user-secrets set APPLICATIONINSIGHTS_CONNECTION_STRING "InstrumentationKey=...;IngestionEndpoint=..." --project HeroRegistry/src/HeroRegistry.Api
+
+# Docker Compose: set APPLICATIONINSIGHTS_CONNECTION_STRING in .env (T15)
+```
+
+The connection string must come from the Azure portal. A placeholder value such as `<use secrets>` stops the API at startup with a clear error, instead of silently losing telemetry.
+
+| Setting                                         | Default | Purpose |
+| ----------------------------------------------- | ------- | ------- |
+| `ApplicationInsights:SamplingRatio`             | `1.0`   | Fraction of traces sent (0.0 to 1.0) |
+| `Database:SlowCommandThresholdMs`               | `500`   | Data operations slower than this also log a Warning (0 disables it) |
+| `Logging:OpenTelemetry:LogLevel:<category>`     | see `appsettings.json` | Log filtering for the telemetry pipeline. Data-layer logs (`HeroRegistry.Infrastructure.Persistence`) are `Information` (reads at `Debug` in Development) |
+
+### Privacy and SQL Server
+
+- **Nothing is installed or changed on SQL Server.** All tracking happens client-side, in the API process.
+- **No personal data in telemetry:** SQL parameter values are never captured, literals in SQL text are replaced by `?`, and exception messages (which SQL Server can fill with data, for example duplicate key values) are never attached. Only tables, ids, row counts, timings and error types are recorded.
+- **Health-check queries are not traced**, so the `/health` polling doesn't add cost or noise.
+- **Tests never send telemetry to Azure**, even though Development loads the user secrets.
+
+### Useful queries (KQL)
+
+```kusto
+// Requests per endpoint
+requests
+| summarize count(), avg(duration), percentile(duration, 95) by name, resultCode
+
+// SQL commands with their (parameterized) text
+dependencies
+| where type == "SQL"
+| project timestamp, target, data, duration, success, operation_Id
+
+// Data-layer operations: inserts, updates, soft deletes, slow queries and failures
+traces
+| where customDimensions.CategoryName startswith "HeroRegistry.Infrastructure.Persistence"
+| project timestamp, severityLevel, message, customDimensions.Table, customDimensions.ElapsedMs
+```
+
+The `operation_Id` correlates a request with its SQL dependencies and logs in the Application Insights transaction view.
 
 ## Testing
 

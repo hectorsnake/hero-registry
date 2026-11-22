@@ -9,8 +9,8 @@ namespace HeroRegistry.Api.Tests;
 /// <summary>
 /// T02.1: the OpenAPI document and the Scalar API reference are available in Development only.
 /// </summary>
-public class OpenApiAndScalarTests(WebApplicationFactory<Program> factory)
-    : IClassFixture<WebApplicationFactory<Program>>
+public class OpenApiAndScalarTests(HeroRegistryApiFactory factory)
+    : IClassFixture<HeroRegistryApiFactory>
 {
     private const string OpenApiDocumentPath = "/openapi/v1.json";
     private const string ScalarPath = "/scalar";

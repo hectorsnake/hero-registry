@@ -1,4 +1,5 @@
 using HeroRegistry.Infrastructure.Persistence;
+using HeroRegistry.Infrastructure.Persistence.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -59,7 +60,53 @@ public class DependencyInjectionTests
             .ShouldContain(SqlServerHealthCheck.Name);
     }
 
-    private static IConfiguration ConfigurationWith(string? connectionString)
+    [Fact]
+    public void Registers_the_data_access_instrumentation_as_a_singleton()
+    {
+        using var provider = new ServiceCollection()
+            .AddLogging()
+            .AddInfrastructure(ConfigurationWith(ConnectionString))
+            .BuildServiceProvider();
+
+        var instrumentation = provider.GetRequiredService<DataAccessInstrumentation>();
+
+        instrumentation.ShouldBeSameAs(provider.GetRequiredService<DataAccessInstrumentation>());
+        provider.GetRequiredService<TimeProvider>().ShouldBe(TimeProvider.System);
+    }
+
+    [Fact]
+    public void Uses_the_default_slow_command_threshold_when_none_is_configured()
+    {
+        using var provider = new ServiceCollection()
+            .AddInfrastructure(ConfigurationWith(ConnectionString))
+            .BuildServiceProvider();
+
+        provider.GetRequiredService<IOptions<DatabaseOptions>>().Value.SlowCommandThresholdMs
+            .ShouldBe(DatabaseOptions.DefaultSlowCommandThresholdMs);
+    }
+
+    [Fact]
+    public void Binds_the_slow_command_threshold()
+    {
+        using var provider = new ServiceCollection()
+            .AddInfrastructure(ConfigurationWith(ConnectionString, slowThresholdMs: "250"))
+            .BuildServiceProvider();
+
+        provider.GetRequiredService<IOptions<DatabaseOptions>>().Value.SlowCommandThresholdMs.ShouldBe(250);
+    }
+
+    [Fact]
+    public void Rejects_a_negative_slow_command_threshold()
+    {
+        using var provider = new ServiceCollection()
+            .AddInfrastructure(ConfigurationWith(ConnectionString, slowThresholdMs: "-1"))
+            .BuildServiceProvider();
+
+        Should.Throw<OptionsValidationException>(
+            () => provider.GetRequiredService<IOptions<DatabaseOptions>>().Value);
+    }
+
+    private static IConfiguration ConfigurationWith(string? connectionString, string? slowThresholdMs = null)
     {
         // GetConnectionString(name) reads the "ConnectionStrings" section's value for that name.
         var section = Substitute.For<IConfigurationSection>();
@@ -67,6 +114,7 @@ public class DependencyInjectionTests
 
         var configuration = Substitute.For<IConfiguration>();
         configuration.GetSection("ConnectionStrings").Returns(section);
+        configuration[DatabaseOptions.SlowCommandThresholdKey].Returns(slowThresholdMs);
         return configuration;
     }
 }

@@ -2,12 +2,17 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.Testing" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
     <PackageReference Include="NSubstitute" />
+    <PackageReference Include="OpenTelemetry.Exporter.InMemory" />
     <PackageReference Include="Testcontainers.MsSql" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\HeroRegistry.Infrastructure\HeroRegistry.Infrastructure.csproj" />
+    <!-- SQL tracing is tested with the exact configuration the API uses (AddHeroRegistrySqlClientInstrumentation). -->
+    <ProjectReference Include="..\..\src\HeroRegistry.ServiceDefaults\HeroRegistry.ServiceDefaults.csproj" />
   </ItemGroup>
 
 </Project>

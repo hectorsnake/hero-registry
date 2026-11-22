@@ -20,5 +20,6 @@
     <Project Path="tests/HeroRegistry.Application.Tests/HeroRegistry.Application.Tests.csproj" />
     <Project Path="tests/HeroRegistry.Infrastructure.Tests/HeroRegistry.Infrastructure.Tests.csproj" />
     <Project Path="tests/HeroRegistry.Api.Tests/HeroRegistry.Api.Tests.csproj" />
+    <Project Path="tests/HeroRegistry.ServiceDefaults.Tests/HeroRegistry.ServiceDefaults.Tests.csproj" />
   </Folder>
 </Solution>

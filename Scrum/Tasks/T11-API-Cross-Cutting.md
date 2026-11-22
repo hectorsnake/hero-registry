@@ -9,7 +9,8 @@ Add consistent error handling, documentation, CORS, health checks and configurat
 - [ ] Global exception handling with `IExceptionHandler` plus `AddProblemDetails()`:
   - Unhandled exceptions return 500 ProblemDetails with no stack trace outside Development.
   - `DuplicateEntityException` returns 409.
-  - Include the `traceId` in responses.
+  - Include the `traceId` in responses. The same id is the `operation_Id` in Application Insights (T02.2).
+  - Never log or return raw `SqlException` messages: they can contain personal data (T02.2).
 - [ ] Customize `InvalidModelStateResponseFactory` so that model binding errors return `ValidationProblemDetails` in the same shape as Application validation errors.
 - [ ] Add a JWT Bearer security scheme to the OpenAPI document and configure Scalar's preferred scheme (`AddPreferredSecuritySchemes`), so authorized endpoints can be called from Scalar. The OpenAPI document and Scalar UI themselves are done in [T02.1](T02.1-OpenAPI-Scalar.md).
 - [ ] CORS policy `ui`: allowed origins come from configuration (`Cors:AllowedOrigins`), for the docker-compose UI origin and `http://localhost:4200`.

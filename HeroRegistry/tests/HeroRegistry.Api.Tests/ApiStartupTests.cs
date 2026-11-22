@@ -6,8 +6,8 @@ namespace HeroRegistry.Api.Tests;
 /// <summary>
 /// Smoke tests: the composition root (Application, Infrastructure and Api) builds and serves requests.
 /// </summary>
-public class ApiStartupTests(WebApplicationFactory<Program> factory)
-    : IClassFixture<WebApplicationFactory<Program>>
+public class ApiStartupTests(HeroRegistryApiFactory factory)
+    : IClassFixture<HeroRegistryApiFactory>
 {
     // OpenAPI and Scalar behavior is covered in OpenApiAndScalarTests (T02.1).
 

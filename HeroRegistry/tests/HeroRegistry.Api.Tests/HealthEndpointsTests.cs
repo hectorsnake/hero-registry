@@ -7,8 +7,8 @@ namespace HeroRegistry.Api.Tests;
 /// The health endpoints come from ServiceDefaults. Aspire polls /health to show the API's state.
 /// No database is configured in these tests, so readiness must report the API as unhealthy.
 /// </summary>
-public class HealthEndpointsTests(WebApplicationFactory<Program> factory)
-    : IClassFixture<WebApplicationFactory<Program>>
+public class HealthEndpointsTests(HeroRegistryApiFactory factory)
+    : IClassFixture<HeroRegistryApiFactory>
 {
     [Fact]
     public async Task Alive_returns_ok_without_checking_dependencies()

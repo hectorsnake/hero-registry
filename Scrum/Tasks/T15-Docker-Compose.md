@@ -17,6 +17,7 @@ Deliver the whole system so that it runs with a single `docker compose up --buil
   - `api`: `ConnectionStrings__HeroRegistryDb`, `Jwt__Key`, `Jwt__Issuer` and `Jwt__Audience` from `.env`. `depends_on: sqlserver (service_healthy)`. Port `5080:8080`.
   - `ui`: `depends_on: api`. Port `8080:80`.
 - [ ] Add `.env.example` (committed) and add `.env` to `.gitignore`.
+- [ ] Application Insights ([T02.2](T02.2-Application-Insights-Logging.md)): pass `APPLICATIONINSIGHTS_CONNECTION_STRING` to the `api` service from `.env`. In `.env.example`, leave it **empty**, which disables it. Never use a placeholder: a non-empty invalid value stops the API at startup. Also set `OTEL_SERVICE_NAME=hero-registry-api`, so Application Insights shows a clear cloud role name.
 - [ ] Add `.dockerignore` files for both images (`bin`, `obj`, `node_modules`, `.angular`).
 - [ ] The API runs the migrations and seeding on startup (T03), so no manual database step is needed.
 

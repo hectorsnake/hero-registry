@@ -1,3 +1,4 @@
+using Azure.Monitor.OpenTelemetry.Exporter;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
@@ -5,6 +6,7 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 // Placed in the Hosting namespace so `builder.AddServiceDefaults()` is available without extra usings.
@@ -24,6 +26,12 @@ public static class Extensions
 
     /// <summary>Tag for health checks that only verify the process itself is responsive.</summary>
     public const string LiveTag = "live";
+
+    /// <summary>
+    /// Every ActivitySource and Meter named "HeroRegistry.*" is collected,
+    /// for example the data layer's "HeroRegistry.Data".
+    /// </summary>
+    public const string HeroRegistryTelemetrySources = "HeroRegistry.*";
 
     public static TBuilder AddServiceDefaults<TBuilder>(this TBuilder builder)
         where TBuilder : IHostApplicationBuilder
@@ -52,19 +60,36 @@ public static class Extensions
             logging.IncludeScopes = true;
         });
 
-        builder.Services.AddOpenTelemetry()
+        var openTelemetry = builder.Services.AddOpenTelemetry();
+
+        // Service name = Application Insights "cloud role name". Aspire sets OTEL_SERVICE_NAME to the
+        // resource name ("api") and its dashboard relies on it, so it is only defaulted when absent.
+        if (string.IsNullOrWhiteSpace(builder.Configuration["OTEL_SERVICE_NAME"]))
+        {
+            openTelemetry.ConfigureResource(resource => resource.AddService(builder.Environment.ApplicationName));
+        }
+
+        openTelemetry
             .WithMetrics(metrics => metrics
                 .AddAspNetCoreInstrumentation()
                 .AddHttpClientInstrumentation()
-                .AddRuntimeInstrumentation())
+                .AddRuntimeInstrumentation()
+                .AddMeter(HeroRegistryTelemetrySources))
             .WithTracing(tracing => tracing
                 .AddSource(builder.Environment.ApplicationName)
+                .AddSource(HeroRegistryTelemetrySources)
+                // Requests to endpoints: Application Insights "requests".
                 .AddAspNetCoreInstrumentation(options =>
+                {
                     // Keep health probes out of the traces.
                     options.Filter = context =>
                         !context.Request.Path.StartsWithSegments(HealthEndpointPath)
-                        && !context.Request.Path.StartsWithSegments(AlivenessEndpointPath))
-                .AddHttpClientInstrumentation());
+                        && !context.Request.Path.StartsWithSegments(AlivenessEndpointPath);
+                    options.RecordException = true;
+                })
+                .AddHttpClientInstrumentation()
+                // SQL commands: Application Insights "dependencies" (type SQL).
+                .AddHeroRegistrySqlClientInstrumentation());
 
         builder.AddOpenTelemetryExporters();
 
@@ -74,12 +99,28 @@ public static class Extensions
     private static TBuilder AddOpenTelemetryExporters<TBuilder>(this TBuilder builder)
         where TBuilder : IHostApplicationBuilder
     {
-        // Aspire sets OTEL_EXPORTER_OTLP_ENDPOINT to its dashboard. Outside Aspire nothing is exported.
+        // Aspire dashboard: Aspire sets OTEL_EXPORTER_OTLP_ENDPOINT. Outside Aspire it is not set.
         var useOtlpExporter = !string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]);
 
         if (useOtlpExporter)
         {
             builder.Services.AddOpenTelemetry().UseOtlpExporter();
+        }
+
+        // Azure Application Insights: logs (traces), requests, dependencies, exceptions and metrics.
+        // Both exporters can be active at the same time; they receive the same telemetry.
+        if (AzureMonitorSettings.TryGetConnectionString(builder.Configuration, out var connectionString))
+        {
+            var samplingRatio = AzureMonitorSettings.GetSamplingRatio(builder.Configuration);
+
+            builder.Services.AddOpenTelemetry().UseAzureMonitorExporter(options =>
+            {
+                options.ConnectionString = connectionString;
+                options.SamplingRatio = samplingRatio;
+                // TracesPerSecond (rate-limited sampling) takes precedence over SamplingRatio when set,
+                // so it is cleared to keep a single, predictable setting.
+                options.TracesPerSecond = null;
+            });
         }
 
         return builder;

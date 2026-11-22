@@ -15,7 +15,8 @@ Implement the Application persistence ports on top of the generic `SqlRepository
   - `EXISTS (SELECT 1 FROM OPENJSON(Superpowers) WHERE value LIKE @search)`.
   - **Whitelisted** `ORDER BY` column (HeroName, PowerLevel or CreatedAt) and direction.
   - `OFFSET`/`FETCH` paging plus `COUNT(*) OVER()` for the total.
-- [ ] Translate `SqlException` 2601/2627 (unique index violation) into a `DuplicateEntityException` from Application. This is a safety net for race conditions.
+- [ ] Translate `SqlException` 2601/2627 (unique index violation) into a `DuplicateEntityException` from Application. This is a safety net for race conditions. The new exception must **not** carry SQL Server's message, which contains the duplicate value (personal data). See [T02.2](T02.2-Application-Insights-Logging.md).
+- [ ] Wrap every repository operation in `DataAccessInstrumentation.Begin(...)` (T02.2) so it is timed, traced and logged.
 - [ ] Register the repositories in `AddInfrastructure()`.
 
 ## Tests (TDD, integration with Testcontainers)
