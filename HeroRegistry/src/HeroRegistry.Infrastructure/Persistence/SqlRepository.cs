@@ -1,9 +1,12 @@
 using System.Data;
 using System.Data.Common;
 using System.Globalization;
+using System.Text.RegularExpressions;
+using HeroRegistry.Application.Common;
 using HeroRegistry.Infrastructure.Persistence.Diagnostics;
 using HeroRegistry.Infrastructure.Persistence.Mapping;
 using HeroRegistry.Infrastructure.Persistence.Sql;
+using Microsoft.Data.SqlClient;
 
 namespace HeroRegistry.Infrastructure.Persistence;
 
@@ -13,9 +16,12 @@ namespace HeroRegistry.Infrastructure.Persistence;
 /// and logged by <see cref="DataAccessInstrumentation"/> (T02.2). Concrete repositories (T06) add their
 /// own queries with <see cref="QueryAsync"/> and <see cref="ExecuteScalarAsync{TValue}"/>.
 /// </summary>
-public abstract class SqlRepository<T>
+public abstract partial class SqlRepository<T>
     where T : class
 {
+    private const int UniqueIndexViolation = 2601;
+    private const int UniqueConstraintViolation = 2627;
+
     private readonly IDbConnectionFactory _connections;
     private readonly DataAccessInstrumentation _instrumentation;
 
@@ -123,6 +129,35 @@ public abstract class SqlRepository<T>
             return (result, value is null or DBNull ? 0 : 1, (object?)null);
         });
 
+    /// <summary>
+    /// Whether an active row (other than <paramref name="excludeId"/>) has this value in the column.
+    /// Text comparison follows the column's collation (case-insensitive for the unique columns).
+    /// </summary>
+    protected async Task<bool> ExistsActiveAsync(
+        string columnName,
+        object value,
+        int? excludeId,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+
+        var column = Metadata.FindColumn(columnName)?.QuotedName ?? throw new ArgumentException(
+            $"{Metadata.EntityType.Name} has no column '{columnName}'.", nameof(columnName));
+        var key = Metadata.Key.QuotedName;
+
+        var exists = await ExecuteScalarAsync<int>(
+            $"SELECT CASE WHEN EXISTS (SELECT 1 FROM {Metadata.QualifiedTableName} " +
+            $"WHERE {column} = @Value AND (@ExcludeId IS NULL OR {key} <> @ExcludeId)" +
+            $"{SqlStatementBuilder.ActiveRowsFilter(Metadata, " AND ")}) THEN 1 ELSE 0 END",
+            [
+                Parameter(columnName, value, "@Value"),
+                SqlStatementBuilder.Parameter(Metadata.Key, excludeId, "@ExcludeId"),
+            ],
+            cancellationToken);
+
+        return exists == 1;
+    }
+
     /// <summary>A typed parameter for one of the entity's columns, for custom queries.</summary>
     /// <param name="columnName">The column (case-insensitive).</param>
     /// <param name="value">The property value; it is converted like the column's own values.</param>
@@ -150,10 +185,40 @@ public abstract class SqlRepository<T>
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
+            // Logged with the SQL error number only (T02.2), then translated if it is a unique violation.
             scope.Failed(ex);
+
+            if (ex is SqlException { Number: UniqueIndexViolation or UniqueConstraintViolation } sqlException)
+            {
+                throw new DuplicateEntityException(Metadata.EntityType.Name, DuplicateField(sqlException));
+            }
+
             throw;
         }
     }
+
+    /// <summary>
+    /// The property behind the violated unique index, found through the naming convention
+    /// <c>UX_{Table}_{Column}</c> (see the migration scripts). Only the index name is read from the
+    /// message; the duplicate value it also contains is discarded.
+    /// </summary>
+    private string? DuplicateField(SqlException exception)
+    {
+        var match = UniqueIndexName().Match(exception.Message);
+        var prefix = $"UX_{Metadata.TableName}_";
+
+        if (!match.Success || !match.Groups["name"].Value.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        return Metadata.FindColumn(match.Groups["name"].Value[prefix.Length..])?.Property.Name;
+    }
+
+    // "... with unique index 'UX_Users_UserName'. The duplicate key value is (...)." (2601)
+    // "Violation of UNIQUE KEY constraint 'UX_...'. ..." (2627)
+    [GeneratedRegex(@"(?:unique index|constraint) '(?<name>[A-Za-z0-9_]+)'", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase)]
+    private static partial Regex UniqueIndexName();
 
     private async Task<IReadOnlyList<T>> ReadAsync(
         SqlStatement statement,

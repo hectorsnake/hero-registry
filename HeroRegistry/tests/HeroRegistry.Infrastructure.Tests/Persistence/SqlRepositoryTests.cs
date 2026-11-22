@@ -1,3 +1,4 @@
+using HeroRegistry.Application.Common;
 using HeroRegistry.Domain.Heroes;
 using HeroRegistry.Domain.Users;
 using HeroRegistry.Infrastructure.Persistence;
@@ -186,13 +187,22 @@ public sealed class SqlRepositoryTests(SqlServerContainerFixture sqlServer) : IA
     }
 
     [Fact]
-    public async Task Database_errors_propagate_to_the_caller()
+    public async Task Unique_violations_become_DuplicateEntityException_without_the_value()
     {
-        // Same hero name as a seeded hero: the unique index rejects it. T06 translates this error.
-        var exception = await Should.ThrowAsync<SqlException>(
+        // Same hero name as a seeded hero: the unique index rejects it (T06 translation).
+        var exception = await Should.ThrowAsync<DuplicateEntityException>(
             () => _heroes.InsertAsync(NewHero("Superman", "another.superman@heroregistry.com"), Ct));
 
-        exception.Number.ShouldBe(2601);
+        exception.Field.ShouldBe(nameof(SuperHero.HeroName));
+        exception.InnerException.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task Other_database_errors_propagate_unchanged()
+    {
+        var exception = await Should.ThrowAsync<SqlException>(() => _heroes.BrokenQueryAsync(Ct));
+
+        exception.Number.ShouldBe(208); // invalid object name
     }
 
     // Custom queries for the concrete repositories (T06)
@@ -245,7 +255,7 @@ public sealed class SqlRepositoryTests(SqlServerContainerFixture sqlServer) : IA
     [Fact]
     public async Task Failed_operations_are_logged_as_errors()
     {
-        await Should.ThrowAsync<SqlException>(
+        await Should.ThrowAsync<DuplicateEntityException>(
             () => _heroes.InsertAsync(NewHero("Superman", "another.superman@heroregistry.com"), Ct));
 
         var record = _logger.Collector.LatestRecord;
@@ -285,6 +295,9 @@ public sealed class SqlRepositoryTests(SqlServerContainerFixture sqlServer) : IA
                 row => total = row.GetInt32(row.GetOrdinal("TotalCount")));
             return (page, total);
         }
+
+        public Task<IReadOnlyList<SuperHero>> BrokenQueryAsync(CancellationToken cancellationToken) =>
+            QueryAsync("SELECT * FROM [dbo].[NoSuchTable]", [], cancellationToken);
 
         public Task<int> CountActiveAsync(CancellationToken cancellationToken) =>
             ExecuteScalarAsync<int>(

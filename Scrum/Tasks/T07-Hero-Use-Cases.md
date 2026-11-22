@@ -6,7 +6,7 @@
 Implement the hero business logic (CRUD use cases and validation), independent of the database and the API.
 
 ## Steps
-- [ ] DTOs: `CreateHeroRequest`, `UpdateHeroRequest`, `HeroResponse`, `HeroQuery` (search, page, pageSize, sortBy, sortDir) and `PagedResult<T>`.
+- [ ] DTOs: `CreateHeroRequest`, `UpdateHeroRequest` and `HeroResponse`. `HeroQuery` (with `Normalize()`), `HeroSortBy`, `SortDirection`, `PagedResult<T>` and `DuplicateEntityException` already exist (T06). Reuse them, and map `PagedResult<SuperHero>` to `PagedResult<HeroResponse>`.
 - [ ] Ports:
   - `ICurrentUser` (UserId, IsAdmin)
   - `IClock` (UtcNow, Today), for testability
@@ -15,7 +15,7 @@ Implement the hero business logic (CRUD use cases and validation), independent o
   - Map any `DomainException` that still escapes to a `Validation` error on its `Field`.
 - [ ] `HeroService` (plain class, no MediatR) behind `IHeroService`:
   - `GetAsync(id)`: returns `NotFound` if missing or deleted.
-  - `SearchAsync(query)`: clamps `pageSize` to the range 1 to 100.
+  - `SearchAsync(query)`: page size is limited to 1 to 100. `HeroQuery.Normalize()` (T06) already does this, and the repository applies it too.
   - `CreateAsync(request)`: validate, check uniqueness (`Conflict`), `SuperHero.Create`, `MarkCreated(currentUser)`, save.
   - `UpdateAsync(id, request)`: validate, `NotFound`, uniqueness check excluding self, `Update` plus `MarkUpdated`.
   - `DeleteAsync(id)`: requires `IsAdmin` (otherwise `Forbidden`), returns `NotFound` if missing, then `SoftDelete`.

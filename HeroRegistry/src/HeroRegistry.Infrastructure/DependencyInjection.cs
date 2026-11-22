@@ -1,4 +1,6 @@
+using HeroRegistry.Application.Abstractions.Persistence;
 using HeroRegistry.Infrastructure.Persistence;
+using HeroRegistry.Infrastructure.Persistence.Repositories;
 using HeroRegistry.Infrastructure.Persistence.Diagnostics;
 using HeroRegistry.Infrastructure.Persistence.Migrations;
 using HeroRegistry.Infrastructure.Persistence.Sql;
@@ -44,7 +46,11 @@ public static class DependencyInjection
         // Reflection-based data layer (T05): connections for SqlRepository<T>.
         services.AddSingleton<IDbConnectionFactory, SqlConnectionFactory>();
 
-        // Repositories (T06), password hasher and token service (T08) are registered here.
+        // Repositories (T06): the Application persistence ports.
+        services.AddScoped<IHeroRepository, HeroRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
+
+        // Password hasher and token service (T08) are registered here.
 
         return services;
     }

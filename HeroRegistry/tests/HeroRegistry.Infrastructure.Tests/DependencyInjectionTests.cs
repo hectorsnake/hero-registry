@@ -1,4 +1,6 @@
+using HeroRegistry.Application.Abstractions.Persistence;
 using HeroRegistry.Infrastructure.Persistence;
+using HeroRegistry.Infrastructure.Persistence.Repositories;
 using HeroRegistry.Infrastructure.Persistence.Diagnostics;
 using HeroRegistry.Infrastructure.Persistence.Migrations;
 using HeroRegistry.Infrastructure.Persistence.Sql;
@@ -116,6 +118,17 @@ public class DependencyInjectionTests
 
         provider.GetRequiredService<IDbConnectionFactory>().ShouldBeOfType<SqlConnectionFactory>()
             .ShouldBeSameAs(provider.GetRequiredService<IDbConnectionFactory>());
+    }
+
+    [Fact]
+    public void Registers_the_repositories_as_the_Application_ports_per_scope()
+    {
+        using var provider = BuildProvider(Configuration());
+        using var scope = provider.CreateScope();
+
+        scope.ServiceProvider.GetRequiredService<IHeroRepository>().ShouldBeOfType<HeroRepository>()
+            .ShouldBeSameAs(scope.ServiceProvider.GetRequiredService<IHeroRepository>());
+        scope.ServiceProvider.GetRequiredService<IUserRepository>().ShouldBeOfType<UserRepository>();
     }
 
     private static ServiceProvider BuildProvider(IConfiguration configuration) =>
