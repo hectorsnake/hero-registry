@@ -85,7 +85,9 @@ public static class Extensions
                     options.Filter = context =>
                         !context.Request.Path.StartsWithSegments(HealthEndpointPath)
                         && !context.Request.Path.StartsWithSegments(AlivenessEndpointPath);
-                    options.RecordException = true;
+                    // Exceptions are recorded by the API's exception handler (T11), which withholds
+                    // database exception messages because they can contain personal data (T02.2).
+                    options.RecordException = false;
                 })
                 .AddHttpClientInstrumentation()
                 // SQL commands: Application Insights "dependencies" (type SQL).
@@ -139,20 +141,18 @@ public static class Extensions
     {
         ArgumentNullException.ThrowIfNull(app);
 
-        // Health endpoints are mapped in Development only for now.
-        // Exposing them in other environments (with care) is part of T11.
-        if (app.Environment.IsDevelopment())
-        {
-            // Readiness: every registered health check must pass.
-            // Anonymous: probes (Aspire, Docker) carry no token.
-            app.MapHealthChecks(HealthEndpointPath).AllowAnonymous();
+        // Health endpoints in every environment: container orchestrators (Docker Compose, T15) probe them.
+        // They answer only "Healthy", "Degraded" or "Unhealthy": no details, so nothing is disclosed.
+        // Anonymous: probes carry no token.
 
-            // Liveness: only checks tagged "live".
-            app.MapHealthChecks(AlivenessEndpointPath, new HealthCheckOptions
-            {
-                Predicate = registration => registration.Tags.Contains(LiveTag),
-            }).AllowAnonymous();
-        }
+        // Readiness: every registered health check must pass (includes SQL Server).
+        app.MapHealthChecks(HealthEndpointPath).AllowAnonymous();
+
+        // Liveness: only checks tagged "live".
+        app.MapHealthChecks(AlivenessEndpointPath, new HealthCheckOptions
+        {
+            Predicate = registration => registration.Tags.Contains(LiveTag),
+        }).AllowAnonymous();
 
         return app;
     }

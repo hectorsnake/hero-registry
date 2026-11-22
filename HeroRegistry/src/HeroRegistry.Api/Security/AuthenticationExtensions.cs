@@ -49,6 +49,26 @@ public static class AuthenticationExtensions
                     NameClaimType = "unique_name",
                     RoleClaimType = "role",
                 };
+
+                // 401 and 403 from authentication and authorization as problem details, like every other
+                // error (by default they have an empty body).
+                bearer.Events = new JwtBearerEvents
+                {
+                    OnChallenge = async context =>
+                    {
+                        context.HandleResponse();
+                        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                        context.Response.Headers.WWWAuthenticate = context.AuthenticateFailure is null
+                            ? JwtBearerDefaults.AuthenticationScheme
+                            : $"{JwtBearerDefaults.AuthenticationScheme} error=\"invalid_token\"";
+
+                        await WriteProblemAsync(context.HttpContext, StatusCodes.Status401Unauthorized,
+                            context.AuthenticateFailure is null ? "You must be signed in." : "The access token is invalid or has expired.",
+                            "auth.unauthenticated");
+                    },
+                    OnForbidden = context => WriteProblemAsync(context.HttpContext, StatusCodes.Status403Forbidden,
+                        "You do not have permission to do that.", "auth.forbidden"),
+                };
             });
 
         services.AddAuthorizationBuilder()
@@ -57,6 +77,22 @@ public static class AuthenticationExtensions
             .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
 
         return services;
+    }
+
+    private static async Task WriteProblemAsync(HttpContext httpContext, int status, string title, string code)
+    {
+        httpContext.Response.StatusCode = status;
+        var problemDetails = httpContext.RequestServices.GetRequiredService<IProblemDetailsService>();
+        await problemDetails.WriteAsync(new ProblemDetailsContext
+        {
+            HttpContext = httpContext,
+            ProblemDetails = new Microsoft.AspNetCore.Mvc.ProblemDetails
+            {
+                Status = status,
+                Title = title,
+                Extensions = { ["code"] = code },
+            },
+        });
     }
 
     /// <summary>

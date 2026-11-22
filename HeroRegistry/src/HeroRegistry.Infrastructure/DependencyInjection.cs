@@ -33,7 +33,8 @@ public static class DependencyInjection
             .Validate(options => options.MigrationMaxAttempts >= 1,
                 "'Database:MigrationMaxAttempts' must be at least 1.")
             .Validate(options => options.MigrationRetryDelay >= TimeSpan.Zero,
-                "'Database:MigrationRetryDelay' cannot be negative.");
+                "'Database:MigrationRetryDelay' cannot be negative.")
+            .ValidateOnStart();
 
         services.AddHealthChecks()
             .AddCheck<SqlServerHealthCheck>(SqlServerHealthCheck.Name);

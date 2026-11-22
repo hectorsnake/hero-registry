@@ -242,10 +242,32 @@ Dates use `yyyy-MM-dd` (`"birthDate": "1977-06-18"`), and `superpowers` is a JSO
 
 | Verb | Route      | Auth      | Description  |
 | ---- | ---------- | --------- | ------------ |
-| GET  | `/health`  | Anonymous | Readiness: the API and SQL Server are healthy |
-| GET  | `/alive`   | Anonymous | Liveness: the API process is responsive       |
+| GET  | `/health`  | Anonymous | Readiness: the API and SQL Server are healthy. Available in every environment for container probes; the body is only `Healthy`, `Degraded` or `Unhealthy` |
+| GET  | `/alive`   | Anonymous | Liveness: the API process is responsive. Available in every environment |
 
-Errors are returned as RFC 9457 **ProblemDetails**. Validation errors use `ValidationProblemDetails`.
+### Error format
+
+**Every** error response is RFC 9457 problem details (`application/problem+json`). That includes use-case errors, authentication and authorization (401 and 403), unknown routes, model binding and malformed JSON, and unhandled exceptions:
+
+```json
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "One or more fields are invalid.",
+  "status": 400,
+  "code": "validation.failed",
+  "errors": { "powerLevel": ["PowerLevel must be between 1 and 100."] },
+  "traceId": "00-925b0098b63dd703e91fa7ffcc5d92b8-b70a3ab4d05fab9c-01"
+}
+```
+
+- `code` is stable and machine-readable, for example `validation.failed`, `auth.unauthenticated`, `auth.forbidden`, `auth.invalid_credentials`, `hero.not_found`, `hero.duplicate`, `user.duplicate` or `server.error`.
+- `errors` (400 and 409) is keyed by camelCase field name.
+- `traceId` contains the trace id, which is the `operation_Id` to search in Application Insights.
+- Unhandled exceptions return a generic 500 (`"An unexpected error occurred."`) with no message, type or stack trace. Code bugs are logged with their full exception. Database exceptions are logged only by type and SQL error number, because their messages can contain personal data.
+
+### CORS
+
+Browsers may call the API only from the origins in `Cors:AllowedOrigins`: by default `http://localhost:4200` (Angular dev server) and `http://localhost:8080` (Docker Compose UI). Allowed are any header, the verbs `GET`, `POST`, `PUT` and `DELETE`, the exposed `Location` header, and **no credentials**. Invalid entries (a wildcard, a path, a trailing slash) stop the API at startup. When the UI is served through a proxy on the API's origin (the Aspire dev proxy, nginx), CORS isn't even involved.
 
 ## Getting started
 

@@ -28,6 +28,7 @@ Deliver the whole system so that it runs with a single `docker compose up --buil
   - Run `docker compose down -v && docker compose up --build`.
   - Log in as `admin` at http://localhost:8080 and perform CRUD.
 - [ ] Optional: a CI job that runs compose and curls `/health`.
+- [ ] `api` healthcheck: `/health` is anonymous and mapped in every environment (T11). Use it in compose, for example `curl -f http://localhost:8080/health`, if curl is added to the image, or a small `dotnet` probe. Make `ui` `depends_on: api (service_healthy)`.
 
 ## Done when
 - The stack starts from scratch with one command, the seeded data is visible, and restarting keeps the data (volume).

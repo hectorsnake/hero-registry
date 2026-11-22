@@ -2,6 +2,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <!-- FakeLoggerProvider: checks what the API logs (no personal data). -->
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.Testing" />
     <PackageReference Include="OpenTelemetry.Exporter.InMemory" />
     <!-- A real SQL Server for the endpoint tests: the API migrates and seeds it at startup. -->
     <PackageReference Include="Testcontainers.MsSql" />

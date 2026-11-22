@@ -79,7 +79,7 @@
 - The Angular UI provides login and register pages, a hero list with search, sort and paging, and a hero detail page plus a create/edit form with client-side validation that mirrors the server rules.
 - The delete action is visible only to admins and asks for confirmation before deleting.
 - The UI is responsive (usable from 360 px wide up to desktop) and shows no errors or warnings in the browser console.
-- Server validation errors (`400`, `409`) are shown next to the relevant fields. A `401` response redirects to the login page.
+- Server validation errors (`400`, `409`) are shown next to the relevant fields. A `401` response first triggers a silent token refresh. Only when the refresh fails does it redirect to the login page (AC12).
 
 ### AC10: Demo readiness
 - On first start, the database is created, migrated and seeded with an administrator (`Admin` / `Admin`, `admin@heroregistry.com`) and three heroes: Captain America, Spider-Man and Superman.
@@ -95,6 +95,14 @@
 - **And** as a **regular user**, updating **someone else's** account returns `403 Forbidden` and nothing changes. This is checked before looking the account up, so the response never reveals whether that user id exists.
 - **And** a missing or deleted account returns `404 Not Found` (for my own id, or any id as an administrator). Invalid data returns `400 Bad Request` with field-level errors. A user name or email already used by **another** active account returns `409 Conflict`; keeping my own values is allowed.
 - **And** an update never changes the password, the administrator flag (`IsAdmin`) or the creation audit (`CreatedBy`, `CreatedAt`). An anonymous request returns `401 Unauthorized`.
+
+### AC12: Secure, uninterrupted session
+- **Given** I am signed in
+- **When** my 15-minute access token expires, or I reload the page (F5)
+- **Then** the UI silently gets a new access token through `POST /api/auth/refresh`, using the rotated refresh token in an **HttpOnly, Secure, SameSite=Strict cookie**, and I keep working without seeing the login page.
+- **And** the access token is kept **in memory only**. No token is ever stored in `localStorage` or `sessionStorage`.
+- **And** when the refresh token is expired, revoked or reused (a possible theft, which revokes the whole token family), I am redirected to the login page and returned to my previous page after signing in.
+- **And** logging out (`POST /api/auth/logout`) revokes the refresh token, deletes the cookie, and signs out my other open tabs. Deleting a user revokes all of that user's refresh tokens.
 
 ## Business rules
 
@@ -133,7 +141,7 @@
 ## Technical constraints
 
 - **Back end:** .NET 10, ASP.NET Core Web API (controllers), **Clean Architecture** (Domain, Application, Infrastructure and Api projects).
-- **Database:** SQL Server, with two tables: `Users` and `SuperHeroes`.
+- **Database:** SQL Server, with the `Users` and `SuperHeroes` tables, plus `RefreshTokens` for sessions (T09.1).
 - **Data access:** ADO.NET with a custom **Reflection-based mapper** that persists objects to table rows. **Entity Framework, Dapper and MediatR are forbidden.**
 - **Business logic:** lives in the Application and Domain layers, independent of the data layer and the API.
 - **Front end:** Angular (`hero-registry-ui`).
@@ -143,7 +151,7 @@
 
 ## Non-functional requirements
 
-- **Security:** JWT Bearer authentication, password hashing, parameterized SQL only, CORS restricted to the UI origin, and secrets supplied through configuration or environment variables (never hard-coded in production settings).
+- **Security:** JWT Bearer authentication with short-lived access tokens kept in memory in the UI, and rotated refresh tokens in HttpOnly cookies (only their SHA-256 hash is stored), password hashing, parameterized SQL only, CORS restricted to the UI origin, and secrets supplied through configuration or environment variables (never hard-coded in production settings).
 - **Observability:** structured logging, plus health checks and OpenTelemetry through Aspire ServiceDefaults.
 - **Errors:** consistent RFC 9457 ProblemDetails responses. Unhandled exceptions never leak stack traces.
 - **Quality:** no compiler warnings (`TreatWarningsAsErrors` in src) and nullable reference types enabled.
@@ -160,7 +168,7 @@
 
 ## Out of scope
 
-- Password reset, password change, email confirmation and refresh tokens.
+- Password reset, password change and email confirmation. (Refresh tokens moved into scope: AC12, T09.1.)
 - Editing a user's admin flag (admins are seeded). Account updates (AC11) cover only the user name and email.
 - Restoring deleted records (undelete).
 - Hero images or file uploads.
@@ -183,16 +191,17 @@
 | T07 | [Hero use cases and validation](Tasks/T07-Hero-Use-Cases.md)                                  | Application     | 6 h      | T04        |
 | T08 | [User registration and login use cases (hashing and JWT)](Tasks/T08-Auth-Use-Cases.md)        | Application and Infrastructure | 5 h | T04 |
 | T09 | [Auth and Users API, including account update (AC11)](Tasks/T09-Auth-Users-API.md)        | Application and API | 6 h | T06, T08   |
+| T09.1 | [Refresh tokens (HttpOnly cookie, rotation and logout)](Tasks/T09.1-Refresh-Tokens.md)   | Domain, Application, Infrastructure and API | 5 h | T06, T08, T09 |
 | T10 | [Heroes API](Tasks/T10-Heroes-API.md)                                                         | API             | 5 h      | T06, T07, T09 |
 | T11 | [API cross-cutting concerns](Tasks/T11-API-Cross-Cutting.md)                                  | API             | 3 h      | T01        |
-| T12 | [Angular core: auth service, interceptor, guards and layout](Tasks/T12-Angular-Core.md)       | UI              | 5 h      | T09        |
+| T12 | [Angular core: auth service, interceptor, guards and layout](Tasks/T12-Angular-Core.md)       | UI              | 6 h      | T09, T09.1 |
 | T13 | [Angular login and register pages](Tasks/T13-Angular-Auth-Pages.md)                           | UI              | 4 h      | T12        |
 | T14 | [Angular hero management (list, detail, form, delete)](Tasks/T14-Angular-Hero-Management.md)  | UI              | 10 h     | T10, T12   |
 | T15 | [Docker Compose delivery](Tasks/T15-Docker-Compose.md)                                        | DevOps          | 4 h      | T10, T14   |
 | T16 | [CI pipeline (GitHub Actions)](Tasks/T16-CI-Pipeline.md)                                      | DevOps          | 2 h      | T01        |
 | T17 | [Documentation, GenAI write-up and presentation](Tasks/T17-Documentation-Presentation.md)     | Docs            | 4 h      | all        |
 
-**Total estimate:** about 88 hours.
+**Total estimate:** about 94 hours.
 
 ### Suggested order
 
@@ -201,6 +210,6 @@
 | 1. Foundation   | T01, T02, T02.1, T02.2, T16 | Solution skeleton, Aspire, OpenAPI and Scalar, Application Insights, CI |
 | 2. Core         | T03, T03.1, T04, T07, T08 | Schema, seed data, domain and business rules (TDD) |
 | 3. Persistence  | T05, T06            | Reflection mapper and repositories |
-| 4. API          | T11, T09, T10       | Cross-cutting concerns, Auth/Users API, Heroes API |
+| 4. API          | T11, T09, T09.1, T10 | Cross-cutting concerns, Auth/Users API, refresh tokens, Heroes API |
 | 5. UI           | T12, T13, T14       | Angular core, auth pages, hero management |
 | 6. Delivery     | T15, T17            | Docker Compose, documentation and presentation |

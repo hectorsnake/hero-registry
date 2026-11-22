@@ -66,6 +66,44 @@ public class OpenApiAndScalarTests(HeroRegistryApiFactory factory)
         PathsOf(document).ShouldNotContain("/");
     }
 
+    // T11: JWT Bearer in the OpenAPI document, so Scalar can call protected endpoints
+
+    [Fact]
+    public async Task OpenApi_document_declares_the_JWT_Bearer_security_scheme()
+    {
+        using var document = await GetOpenApiDocumentAsync();
+
+        var scheme = document.RootElement.GetProperty("components").GetProperty("securitySchemes").GetProperty("Bearer");
+        scheme.GetProperty("type").GetString().ShouldBe("http");
+        scheme.GetProperty("scheme").GetString().ShouldBe("bearer");
+        scheme.GetProperty("bearerFormat").GetString().ShouldBe("JWT");
+    }
+
+    [Theory]
+    [InlineData("/api/heroes", "get")]
+    [InlineData("/api/heroes", "post")]
+    [InlineData("/api/users/{id}", "put")]
+    [InlineData("/api/auth/me", "get")]
+    public async Task Protected_operations_require_the_Bearer_token(string path, string method)
+    {
+        using var document = await GetOpenApiDocumentAsync();
+
+        var operation = document.RootElement.GetProperty("paths").GetProperty(path).GetProperty(method);
+        operation.GetProperty("security")[0].TryGetProperty("Bearer", out _).ShouldBeTrue();
+    }
+
+    [Theory]
+    [InlineData("/api/auth/login", "post")]
+    [InlineData("/api/auth/register", "post")]
+    [InlineData("/api/v1/test", "get")]
+    public async Task Anonymous_operations_do_not_require_a_token(string path, string method)
+    {
+        using var document = await GetOpenApiDocumentAsync();
+
+        var operation = document.RootElement.GetProperty("paths").GetProperty(path).GetProperty(method);
+        operation.TryGetProperty("security", out _).ShouldBeFalse();
+    }
+
     // Other environments: the API surface must not be published
 
     [Theory]
