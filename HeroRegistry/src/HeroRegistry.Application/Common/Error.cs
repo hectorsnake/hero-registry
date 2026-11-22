@@ -48,4 +48,15 @@ public static class Errors
     /// </summary>
     public static Error InvalidCredentials() =>
         new(ErrorType.Unauthorized, "auth.invalid_credentials", "Invalid user name or password.", NoFields);
+
+    /// <summary>The refresh token is missing, unknown, expired or revoked: the user must sign in again.</summary>
+    public static Error RefreshInvalid() =>
+        new(ErrorType.Unauthorized, "auth.refresh_invalid", "Your session has expired. Please sign in again.", NoFields);
+
+    /// <summary>
+    /// The refresh token was rotated by another request a moment ago (two tabs refreshing at once).
+    /// Nothing was revoked: retry once, with the newer cookie the browser now holds.
+    /// </summary>
+    public static Error RefreshRace() =>
+        new(ErrorType.Unauthorized, "auth.refresh_race", "The session was just refreshed by another request. Retry.", NoFields);
 }

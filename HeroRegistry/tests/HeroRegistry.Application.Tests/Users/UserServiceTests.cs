@@ -13,11 +13,12 @@ namespace HeroRegistry.Application.Tests.Users;
 public class UserServiceTests
 {
     private readonly IUserRepository _users = Substitute.For<IUserRepository>();
+    private readonly IRefreshTokenRepository _refreshTokens = Substitute.For<IRefreshTokenRepository>();
     private readonly ICurrentUser _currentUser = Substitute.For<ICurrentUser>();
     private readonly UserService _service;
 
     public UserServiceTests() =>
-        _service = new UserService(_users, _currentUser, new FakeTimeProvider(Now));
+        _service = new UserService(_users, _refreshTokens, _currentUser, new FakeTimeProvider(Now));
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
@@ -93,6 +94,31 @@ public class UserServiceTests
         user.IsDeleted.ShouldBeTrue();
         user.UpdatedBy.ShouldBe(AdminId);
         user.UpdatedAt.ShouldBe(Now.UtcDateTime);
+    }
+
+    [Fact]
+    public async Task Deleting_a_user_revokes_all_of_their_refresh_tokens()
+    {
+        SignInAs(AdminId, isAdmin: true);
+        var user = StoredUser(AgentId);
+        _users.GetByIdAsync(AgentId, Arg.Any<CancellationToken>()).Returns(user);
+        _users.SoftDeleteAsync(user, Arg.Any<CancellationToken>()).Returns(true);
+
+        await _service.DeleteAsync(AgentId, Ct);
+
+        await _refreshTokens.Received(1).RevokeAllForUserAsync(AgentId, Now.UtcDateTime, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task A_failed_delete_does_not_touch_refresh_tokens()
+    {
+        SignInAs(AdminId, isAdmin: true);
+        _users.GetByIdAsync(AgentId, Arg.Any<CancellationToken>()).Returns(StoredUser(AgentId));
+        _users.SoftDeleteAsync(Arg.Any<User>(), Arg.Any<CancellationToken>()).Returns(false);
+
+        await _service.DeleteAsync(AgentId, Ct);
+
+        _refreshTokens.ReceivedCalls().ShouldBeEmpty();
     }
 
     [Fact]

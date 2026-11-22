@@ -180,9 +180,23 @@ hero-registry/
 
 Uniqueness (user name, hero name and both emails) ignores case and applies to **active** rows only. A soft-deleted row frees its values. These rules are enforced in the business layer and again by the database as a last line of defense (filtered unique indexes and CHECK constraints).
 
+### `RefreshTokens`
+
+Sessions (T09.1). Rows are revoked, never edited, and only expired ones are physically deleted (on the user's next login).
+
+| Column | Type | Notes |
+| ------ | ---- | ----- |
+| `Id` | `INT IDENTITY` | Primary key |
+| `UserId` | `INT` | FK to `Users(Id)` |
+| `TokenHash` | `CHAR(64)` | SHA-256 (hex) of the token; unique |
+| `FamilyId` | `UNIQUEIDENTIFIER` | One per login, shared by all its rotations |
+| `CreatedAt`, `ExpiresAt` | `DATETIME2(3)` | UTC |
+| `RevokedAt` | `DATETIME2(3) NULL` | Set on rotation, logout, reuse detection or user deletion |
+| `ReplacedByHash` | `CHAR(64) NULL` | Hash of the token that replaced this one (rotation only) |
+
 ### Schema migrations
 
-The schema and the demo data are created by versioned SQL scripts in `HeroRegistry/src/HeroRegistry.Infrastructure/Persistence/Scripts/`: `0001_CreateUsers.sql`, `0002_CreateSuperHeroes.sql` and `0003_SeedData.sql` (the administrator and three heroes). The API applies them **automatically when it starts**, under both Aspire and Docker Compose, through a small in-house runner, because Entity Framework migrations are not used. The runner:
+The schema and the demo data are created by versioned SQL scripts in `HeroRegistry/src/HeroRegistry.Infrastructure/Persistence/Scripts/`: `0001_CreateUsers.sql`, `0002_CreateSuperHeroes.sql`, `0003_SeedData.sql` (the administrator and three heroes) and `0004_CreateRefreshTokens.sql` (sessions, T09.1). The API applies them **automatically when it starts**, under both Aspire and Docker Compose, through a small in-house runner, because Entity Framework migrations are not used. The runner:
 
 - creates the database if it doesn't exist;
 - records each applied script and its checksum in `dbo.SchemaVersions`;
@@ -208,13 +222,28 @@ In Development, the API publishes an interactive **Scalar API reference** at `/s
 | Verb   | Route                 | Auth      | Success | Description                    |
 | ------ | --------------------- | --------- | ------- | ------------------------------ |
 | POST   | `/api/auth/register`  | Anonymous | 201     | Create a regular user account (400 invalid, 409 taken) |
-| POST   | `/api/auth/login`     | Anonymous | 200     | Return a JWT and user info     |
+| POST   | `/api/auth/login`     | Anonymous | 200     | Return a 15-minute JWT and user info, and set the refresh cookie |
+| POST   | `/api/auth/refresh`   | Anonymous (cookie) | 200 | Rotate the refresh cookie and return a new JWT (401 `auth.refresh_invalid` or `auth.refresh_race`) |
+| POST   | `/api/auth/logout`    | Anonymous (cookie) | 204 | Revoke the session and delete the cookie (idempotent) |
 | GET    | `/api/auth/me`        | User      | 200     | Current user's profile         |
 | GET    | `/api/users`          | Admin     | 200     | List users                     |
 | PUT    | `/api/users/{id}`     | Owner or Admin | 200 | Update user name and email. Users can update only themselves; admins can update anyone (403 otherwise) |
 | DELETE | `/api/users/{id}`     | Admin     | 204     | Soft-delete a user             |
 
 Send the token from login as `Authorization: Bearer <accessToken>`. Every endpoint requires a signed-in user unless marked Anonymous. An anonymous request to any other URL, even an unknown one, gets 401, so routes can't be probed.
+
+#### Token lifecycle
+
+| Token | Lifetime | Where it lives | How it is renewed |
+| ----- | -------- | -------------- | ----------------- |
+| Access token (JWT, HS256) | 15 minutes (`Jwt:ExpirationMinutes`) | The UI keeps it **in memory only** and sends it as `Authorization: Bearer` | `POST /api/auth/refresh` |
+| Refresh token (opaque, 256 random bits) | 7 days (`RefreshToken:LifetimeDays`) | `hr_refresh` cookie: `HttpOnly`, `Secure`, `SameSite=Strict`, `Path=/api/auth`. Never in a response body | Rotated on every refresh |
+
+- **Only a hash is stored.** The database keeps the SHA-256 of each refresh token (`dbo.RefreshTokens`), never the token itself. Token values never appear in logs or telemetry.
+- **Rotation and reuse detection.** Each login starts a token *family*. Every refresh revokes the presented token and issues a new one in the same family. If an already rotated token is presented again more than 30 seconds later (`RefreshToken:ReuseGraceSeconds`), it was probably stolen: the whole family is revoked, a warning is logged (user id only), and every holder must sign in again.
+- **Two tabs at once.** Within the 30-second grace window, an old token gets `401 auth.refresh_race` and nothing is revoked; the client retries once with the newer cookie. Any other refresh failure (`auth.refresh_invalid`) also deletes the cookie.
+- **Ending sessions.** `POST /api/auth/logout` revokes the family and deletes the cookie. Deleting a user revokes all of their refresh tokens immediately.
+- **Same origin, no CSRF surface.** The UI reaches the API through its own origin (the Angular dev proxy, or nginx under Docker Compose), so CORS never needs credentials. `SameSite=Strict` stops other sites from sending the cookie.
 
 Errors are `application/problem+json` with a stable `code` (for example `user.duplicate` or `auth.invalid_credentials`) and, for 400 and 409, an `errors` object keyed by field (`userName`, `email`, ...).
 
@@ -432,6 +461,7 @@ The test projects use **xUnit v3** on **Microsoft.Testing.Platform**. The `globa
 | Soft delete and audit columns | Preserves history and traceability. Uniqueness is enforced with **filtered unique indexes** (`WHERE IsDeleted = 0`). |
 | BCrypt password hashing | Uses an adaptive work factor. The `Password` column only ever stores a hash. |
 | JWT Bearer authentication | Stateless API that fits an SPA client. The `IsAdmin` flag maps to an `Admin` role claim. |
+| Short JWT plus a rotated HttpOnly refresh cookie | Keeps tokens out of JavaScript-readable storage (XSS), lets a page reload stay signed in, and makes a stolen refresh token detectable (reuse revokes the family). |
 | Plain application services instead of MediatR | Keeps the code explicit and easy to follow, and meets the constraint. |
 | .NET Aspire for development | One command runs the whole system, with built-in observability. |
 | Docker Compose for delivery | A reproducible, portable deployment with no SDK required. |

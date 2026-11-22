@@ -22,8 +22,11 @@ public class AuthenticationIntegrationTests(SqlServerContainerFixture sqlServer)
         new JwtTokenService(
             Options.Create(new JwtOptions { Key = "integration-test-key-with-32-bytes-or-more" }),
             TimeProvider.System),
+        RefreshTokens,
         Substitute.For<ICurrentUser>(),
-        TimeProvider.System);
+        Options.Create(new RefreshTokenOptions()),
+        TimeProvider.System,
+        Microsoft.Extensions.Logging.Abstractions.NullLogger<AuthService>.Instance);
 
     [Fact]
     public async Task The_seeded_administrator_can_log_in_with_Admin_Admin()
@@ -31,8 +34,8 @@ public class AuthenticationIntegrationTests(SqlServerContainerFixture sqlServer)
         var result = await CreateService().LoginAsync(new LoginRequest { UserName = "Admin", Password = "Admin" }, Ct);
 
         result.IsSuccess.ShouldBeTrue();
-        result.Value.User.IsAdmin.ShouldBeTrue();
-        new JsonWebTokenHandler().ReadJsonWebToken(result.Value.AccessToken).GetClaim("role").Value.ShouldBe("Admin");
+        result.Value.Response.User.IsAdmin.ShouldBeTrue();
+        new JsonWebTokenHandler().ReadJsonWebToken(result.Value.Response.AccessToken).GetClaim("role").Value.ShouldBe("Admin");
     }
 
     [Fact]
@@ -46,7 +49,7 @@ public class AuthenticationIntegrationTests(SqlServerContainerFixture sqlServer)
 
         registered.IsSuccess.ShouldBeTrue();
         login.IsSuccess.ShouldBeTrue();
-        login.Value.User.IsAdmin.ShouldBeFalse();
+        login.Value.Response.User.IsAdmin.ShouldBeFalse();
 
         var stored = await Database.ScalarAsync<string>(
             "SELECT Password FROM dbo.Users WHERE UserName = @Name", ("@Name", "peter.parker"));

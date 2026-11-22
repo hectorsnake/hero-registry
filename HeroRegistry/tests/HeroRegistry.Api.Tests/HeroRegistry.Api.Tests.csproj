@@ -5,6 +5,8 @@
     <!-- FakeLoggerProvider: checks what the API logs (no personal data). -->
     <PackageReference Include="Microsoft.Extensions.Diagnostics.Testing" />
     <PackageReference Include="OpenTelemetry.Exporter.InMemory" />
+    <!-- A controllable clock for the refresh-token grace window. -->
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
     <!-- A real SQL Server for the endpoint tests: the API migrates and seeds it at startup. -->
     <PackageReference Include="Testcontainers.MsSql" />
   </ItemGroup>

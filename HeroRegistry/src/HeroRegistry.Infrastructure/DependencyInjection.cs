@@ -1,5 +1,6 @@
 using HeroRegistry.Application.Abstractions.Persistence;
 using HeroRegistry.Application.Abstractions.Security;
+using HeroRegistry.Application.Users;
 using HeroRegistry.Infrastructure.Persistence;
 using HeroRegistry.Infrastructure.Persistence.Repositories;
 using HeroRegistry.Infrastructure.Persistence.Diagnostics;
@@ -53,12 +54,19 @@ public static class DependencyInjection
         // Repositories (T06): the Application persistence ports.
         services.AddScoped<IHeroRepository, HeroRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
         // Password hashing and access tokens (T08). Invalid JWT settings stop the application at startup.
         services.AddOptions<JwtOptions>()
             .Bind(configuration.GetSection(JwtOptions.SectionName))
             .ValidateOnStart();
         services.AddSingleton<IValidateOptions<JwtOptions>, JwtOptionsValidator>();
+        // Refresh tokens (T09.1): lifetime, reuse grace window and cookie name, validated at startup.
+        services.AddOptions<RefreshTokenOptions>()
+            .Bind(configuration.GetSection(RefreshTokenOptions.SectionName))
+            .ValidateOnStart();
+        services.AddSingleton<IValidateOptions<RefreshTokenOptions>, RefreshTokenOptionsValidator>();
+
         services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
         services.AddSingleton<ITokenService, JwtTokenService>();
 

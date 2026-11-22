@@ -21,6 +21,10 @@ internal static partial class DataAccessLog
         Message = "Soft-deleted {Table} row {EntityId} ({RowsAffected} row(s) affected) in {ElapsedMs} ms")]
     public static partial void SoftDeleted(ILogger logger, string table, string? entityId, int rowsAffected, double elapsedMs);
 
+    [LoggerMessage(EventId = 2007, Level = LogLevel.Information,
+        Message = "Deleted {RowsAffected} {Table} row(s) in {ElapsedMs} ms")]
+    public static partial void Deleted(ILogger logger, int rowsAffected, string table, double elapsedMs);
+
     [LoggerMessage(EventId = 2004, Level = LogLevel.Debug,
         Message = "Selected {RowCount} {Table} rows in {ElapsedMs} ms")]
     public static partial void Selected(ILogger logger, int rowCount, string table, double elapsedMs);

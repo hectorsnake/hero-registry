@@ -93,6 +93,19 @@ public sealed class DataAccessInstrumentationTests : IDisposable
     }
 
     [Fact]
+    public void A_housekeeping_delete_logs_the_row_count_at_Information()
+    {
+        using (var operation = Create().Begin(DataOperation.Delete, _table))
+        {
+            _time.Advance(TimeSpan.FromMilliseconds(6));
+            operation.Succeeded(rowCount: 4);
+        }
+
+        _logger.Collector.LatestRecord.Message.ShouldBe($"Deleted 4 {_table} row(s) in 6 ms");
+        _spans.ShouldHaveSingleItem().GetTagItem("db.operation.name").ShouldBe("DELETE");
+    }
+
+    [Fact]
     public void Select_logs_the_row_count_at_Debug_because_reads_are_frequent()
     {
         using (var operation = Create().Begin(DataOperation.Select, _table))

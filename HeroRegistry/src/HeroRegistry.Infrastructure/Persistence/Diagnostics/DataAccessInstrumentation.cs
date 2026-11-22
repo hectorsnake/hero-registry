@@ -78,6 +78,9 @@ public sealed class DataAccessInstrumentation(
             case DataOperation.SoftDelete:
                 DataAccessLog.SoftDeleted(logger, table, entityId, rowCount, elapsedMs);
                 break;
+            case DataOperation.Delete:
+                DataAccessLog.Deleted(logger, rowCount, table, elapsedMs);
+                break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(operation), operation, null);
         }

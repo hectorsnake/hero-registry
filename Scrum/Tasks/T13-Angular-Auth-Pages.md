@@ -14,6 +14,13 @@ APIs verified against the installed `@angular/forms/signals` (Angular 22.3):
   - Field state comes from signals: `loginForm.userName().invalid()`, `touched()` and `errors()`. The submit button uses `loginForm().invalid()` and the pending state.
 - **Submit:** `submit(loginForm, async () => { ... })` marks every field as touched, runs only when the form is valid, and is the one place where server errors are mapped back onto the fields.
 
+## TDD (mandatory)
+Follow the [T12 TDD workflow](T12-Angular-Core.md#tdd-workflow-mandatory-for-t12-t13-and-t14): red → green → refactor, one behavior at a time, with evidence in the Implementation notes. Suggested order, each driven by its specs from the Tests section:
+1. `auth.schemas.ts` (pure, fastest feedback): boundaries for user name, email, every password rule, and confirm password.
+2. `FormFieldErrorComponent`.
+3. `LoginComponent`: empty form invalid → submit payload → navigation → 401 message → open-redirect guard → pending state.
+4. `RegisterComponent`: password checklist → server 409/400 mapping → error cleared on edit → login and navigate.
+
 ## Steps
 - [ ] **Shared schemas (`features/auth/auth.schemas.ts`)**, mirroring the server rules (US-001, User table):
   - `userNameSchema`: `required`, `minLength(3)`, `maxLength(50)`, `pattern(/^[a-zA-Z0-9._-]+$/)`.
@@ -74,3 +81,4 @@ Assert against the form's signals directly (`form.userName().errors()`). Use `aw
 ## Done when
 - A new user can register and log in from the UI at 360 px and on desktop, with field-level server errors and no console warnings.
 - No Reactive Forms or template-driven forms are used. ESLint (T12 rules) passes.
+- **TDD evidence:** every spec listed in Tests was red before its implementation (recorded in the Implementation notes). `npm run test:coverage` meets 80% lines and branches for `features/auth` and `shared/forms`.

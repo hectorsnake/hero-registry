@@ -129,6 +129,7 @@ public class DependencyInjectionTests
         scope.ServiceProvider.GetRequiredService<IHeroRepository>().ShouldBeOfType<HeroRepository>()
             .ShouldBeSameAs(scope.ServiceProvider.GetRequiredService<IHeroRepository>());
         scope.ServiceProvider.GetRequiredService<IUserRepository>().ShouldBeOfType<UserRepository>();
+        scope.ServiceProvider.GetRequiredService<IRefreshTokenRepository>().ShouldBeOfType<RefreshTokenRepository>();
     }
 
     private static ServiceProvider BuildProvider(IConfiguration configuration) =>

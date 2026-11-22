@@ -47,6 +47,15 @@ Content-Type: application/json
 GET {{HeroRegistry_Api_HostAddress}}/api/auth/me
 Authorization: Bearer {{token}}
 
+### Refresh the session (T09.1): send the hr_refresh cookie from the login response -> 200, new token + rotated cookie
+# The cookie is Secure and Path=/api/auth: use the https profile so the client stores and sends it.
+# Replaying an old cookie more than 30 s after it was rotated -> 401 auth.refresh_invalid (session revoked).
+# @name refresh
+POST {{HeroRegistry_Api_HostAddress}}/api/auth/refresh
+
+### Log out (T09.1): revoke the session and delete the cookie -> 204 (a later refresh -> 401)
+POST {{HeroRegistry_Api_HostAddress}}/api/auth/logout
+
 ###############################################################################
 # Users (T09, AC11)
 ###############################################################################

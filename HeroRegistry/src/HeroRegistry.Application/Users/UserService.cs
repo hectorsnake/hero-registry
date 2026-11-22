@@ -28,7 +28,11 @@ public interface IUserService
     Task<Result> DeleteAsync(int id, CancellationToken cancellationToken = default);
 }
 
-public sealed class UserService(IUserRepository users, ICurrentUser currentUser, TimeProvider clock) : IUserService
+public sealed class UserService(
+    IUserRepository users,
+    IRefreshTokenRepository refreshTokens,
+    ICurrentUser currentUser,
+    TimeProvider clock) : IUserService
 {
     public async Task<Result<UserResponse>> GetCurrentAsync(CancellationToken cancellationToken = default)
     {
@@ -136,11 +140,17 @@ public sealed class UserService(IUserRepository users, ICurrentUser currentUser,
             return UserNotFound(id);
         }
 
-        user.SoftDelete(adminId, clock.GetUtcNow().UtcDateTime);
+        var now = clock.GetUtcNow().UtcDateTime;
+        user.SoftDelete(adminId, now);
 
-        return await users.SoftDeleteAsync(user, cancellationToken)
-            ? Result.Success()
-            : UserNotFound(id); // deleted by another request meanwhile
+        if (!await users.SoftDeleteAsync(user, cancellationToken))
+        {
+            return UserNotFound(id); // deleted by another request meanwhile
+        }
+
+        // A deleted user's sessions end now, not when their refresh tokens expire (AC12).
+        await refreshTokens.RevokeAllForUserAsync(id, now, cancellationToken);
+        return Result.Success();
     }
 
     private Error? RequireAdmin()

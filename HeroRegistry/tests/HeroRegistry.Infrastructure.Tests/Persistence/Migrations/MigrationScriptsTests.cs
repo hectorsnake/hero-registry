@@ -8,7 +8,7 @@ public class MigrationScriptsTests
     public void Embedded_scripts_are_loaded_in_numeric_order()
     {
         MigrationScripts.All.Select(s => s.Name)
-            .ShouldBe(["0001_CreateUsers.sql", "0002_CreateSuperHeroes.sql", "0003_SeedData.sql"]);
+            .ShouldBe(["0001_CreateUsers.sql", "0002_CreateSuperHeroes.sql", "0003_SeedData.sql", "0004_CreateRefreshTokens.sql"]);
     }
 
     [Fact]

@@ -7,8 +7,11 @@ public enum DataOperation
     Insert,
     Update,
 
-    /// <summary>An UPDATE that sets <c>IsDeleted = 1</c>. Rows are never physically deleted.</summary>
+    /// <summary>An UPDATE that sets <c>IsDeleted = 1</c>. Business rows are never physically deleted.</summary>
     SoftDelete,
+
+    /// <summary>A physical DELETE, for housekeeping only (for example expired refresh tokens).</summary>
+    Delete,
 }
 
 internal static class DataOperationExtensions
@@ -20,6 +23,7 @@ internal static class DataOperationExtensions
         DataOperation.Insert => "INSERT",
         DataOperation.Update => "UPDATE",
         DataOperation.SoftDelete => "SOFT DELETE",
+        DataOperation.Delete => "DELETE",
         _ => throw new ArgumentOutOfRangeException(nameof(operation), operation, null),
     };
 
@@ -29,6 +33,7 @@ internal static class DataOperationExtensions
         DataOperation.Select => "SELECT",
         DataOperation.Insert => "INSERT",
         DataOperation.Update or DataOperation.SoftDelete => "UPDATE",
+        DataOperation.Delete => "DELETE",
         _ => throw new ArgumentOutOfRangeException(nameof(operation), operation, null),
     };
 }

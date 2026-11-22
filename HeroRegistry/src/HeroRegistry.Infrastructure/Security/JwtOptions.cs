@@ -21,8 +21,11 @@ public sealed class JwtOptions
 
     public string Key { get; set; } = string.Empty;
 
-    /// <summary>Token lifetime. There are no refresh tokens (out of scope), so users sign in again after it.</summary>
-    public int ExpirationMinutes { get; set; } = 60;
+    /// <summary>
+    /// Access token lifetime. Kept short (15 minutes in appsettings.json): the UI renews it silently with
+    /// the rotated refresh token in the HttpOnly cookie (T09.1).
+    /// </summary>
+    public int ExpirationMinutes { get; set; } = 15;
 }
 
 /// <summary>Rejects missing or weak settings at startup (registered with ValidateOnStart).</summary>

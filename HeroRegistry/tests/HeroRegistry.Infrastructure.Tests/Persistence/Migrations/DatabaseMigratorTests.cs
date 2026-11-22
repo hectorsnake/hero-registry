@@ -12,7 +12,7 @@ namespace HeroRegistry.Infrastructure.Tests.Persistence.Migrations;
 /// </summary>
 public class DatabaseMigratorTests(SqlServerContainerFixture sqlServer)
 {
-    private static readonly string[] AllScripts = ["0001_CreateUsers.sql", "0002_CreateSuperHeroes.sql", "0003_SeedData.sql"];
+    private static readonly string[] AllScripts = ["0001_CreateUsers.sql", "0002_CreateSuperHeroes.sql", "0003_SeedData.sql", "0004_CreateRefreshTokens.sql"];
 
     private readonly TestDatabase _database = new(sqlServer);
 
@@ -30,6 +30,7 @@ public class DatabaseMigratorTests(SqlServerContainerFixture sqlServer)
     [InlineData("dbo.Users")]
     [InlineData("dbo.SuperHeroes")]
     [InlineData("dbo.SchemaVersions")]
+    [InlineData("dbo.RefreshTokens")]
     public async Task Creates_the_tables(string table)
     {
         await _database.MigrateAsync();

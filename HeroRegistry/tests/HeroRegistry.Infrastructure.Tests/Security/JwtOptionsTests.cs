@@ -22,7 +22,7 @@ public class JwtOptionsTests
         options.Key.ShouldBe(ValidKey);
         options.Issuer.ShouldBe("hero-registry-api");
         options.Audience.ShouldBe("hero-registry-ui");
-        options.ExpirationMinutes.ShouldBe(60);
+        options.ExpirationMinutes.ShouldBe(15);
     }
 
     [Fact]
@@ -69,6 +69,34 @@ public class JwtOptionsTests
 
         provider.GetRequiredService<IPasswordHasher>().ShouldBeOfType<BCryptPasswordHasher>();
         provider.GetRequiredService<ITokenService>().ShouldBeOfType<JwtTokenService>();
+    }
+
+    // Refresh token settings (T09.1)
+
+    [Fact]
+    public void Refresh_token_settings_have_secure_defaults()
+    {
+        using var provider = Provider(("Jwt:Key", ValidKey));
+        var options = provider.GetRequiredService<IOptions<HeroRegistry.Application.Users.RefreshTokenOptions>>().Value;
+
+        options.LifetimeDays.ShouldBe(7);
+        options.ReuseGraceSeconds.ShouldBe(30);
+        options.CookieName.ShouldBe("hr_refresh");
+    }
+
+    [Theory]
+    [InlineData("RefreshToken:LifetimeDays", "0")]
+    [InlineData("RefreshToken:LifetimeDays", "31")]
+    [InlineData("RefreshToken:ReuseGraceSeconds", "-1")]
+    [InlineData("RefreshToken:ReuseGraceSeconds", "121")]
+    [InlineData("RefreshToken:CookieName", "bad name;")]
+    public void Invalid_refresh_token_settings_are_rejected_with_the_setting_name(string key, string value)
+    {
+        using var provider = Provider(("Jwt:Key", ValidKey), (key, value));
+
+        Should.Throw<OptionsValidationException>(
+                () => provider.GetRequiredService<IOptions<HeroRegistry.Application.Users.RefreshTokenOptions>>().Value)
+            .Message.ShouldContain(key);
     }
 
     private static JwtOptions OptionsFrom(params (string Key, string? Value)[] settings)

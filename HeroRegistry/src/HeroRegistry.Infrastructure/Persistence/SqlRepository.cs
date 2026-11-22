@@ -130,6 +130,21 @@ public abstract partial class SqlRepository<T>
         });
 
     /// <summary>
+    /// Runs a custom INSERT, UPDATE or DELETE and returns the number of affected rows, timed and logged
+    /// as <paramref name="operation"/>. Pass every value as a parameter.
+    /// </summary>
+    protected Task<int> ExecuteAsync(
+        string sql,
+        IReadOnlyList<SqlParameterValue> parameters,
+        DataOperation operation,
+        CancellationToken cancellationToken) =>
+        InstrumentAsync(operation, null, async () =>
+        {
+            var rows = await NonQueryAsync(new SqlStatement(sql, parameters), cancellationToken);
+            return (rows, rows, (object?)null);
+        });
+
+    /// <summary>
     /// Whether an active row (other than <paramref name="excludeId"/>) has this value in the column.
     /// Text comparison follows the column's collation (case-insensitive for the unique columns).
     /// </summary>

@@ -24,6 +24,8 @@ public abstract class RepositoryTestBase(SqlServerContainerFixture sqlServer) : 
 
     protected UserRepository Users { get; private set; } = null!;
 
+    protected RefreshTokenRepository RefreshTokens { get; private set; } = null!;
+
     protected int AdminId { get; private set; }
 
     protected static CancellationToken Ct => TestContext.Current.CancellationToken;
@@ -39,6 +41,7 @@ public abstract class RepositoryTestBase(SqlServerContainerFixture sqlServer) : 
 
         Heroes = new HeroRepository(connections, instrumentation);
         Users = new UserRepository(connections, instrumentation);
+        RefreshTokens = new RefreshTokenRepository(connections, instrumentation);
         AdminId = await Database.ScalarAsync<int>("SELECT Id FROM dbo.Users WHERE UserName = 'Admin'");
     }
 

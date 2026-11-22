@@ -84,6 +84,36 @@ public class JwtTokenServiceTests
         (await ValidateAsync(token, "a-completely-different-key-of-32-bytes!!")).IsValid.ShouldBeFalse();
     }
 
+    // Refresh tokens (T09.1)
+
+    [Fact]
+    public void A_refresh_token_is_256_random_bits_Base64Url_encoded_and_not_a_JWT()
+    {
+        var refresh = _service.CreateRefreshToken();
+
+        refresh.Token.Length.ShouldBe(43); // 32 bytes, Base64Url without padding
+        refresh.Token.ShouldNotContain(".");
+        refresh.Token.ShouldMatch("^[A-Za-z0-9_-]+$"); // cookie-safe
+        Base64UrlEncoder.DecodeBytes(refresh.Token).Length.ShouldBe(32);
+    }
+
+    [Fact]
+    public void Every_refresh_token_is_different()
+    {
+        Enumerable.Range(0, 100).Select(_ => _service.CreateRefreshToken().Token).Distinct().Count().ShouldBe(100);
+    }
+
+    [Fact]
+    public void The_stored_hash_is_the_lower_case_hex_SHA256_of_the_token()
+    {
+        var refresh = _service.CreateRefreshToken();
+
+        refresh.Hash.ShouldMatch("^[0-9a-f]{64}$");
+        refresh.Hash.ShouldBe(_service.HashRefreshToken(refresh.Token));
+        refresh.Hash.ShouldNotContain(refresh.Token);
+        _service.HashRefreshToken("abc").ShouldBe("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
+    }
+
     private static JsonWebToken Read(string token) => new JsonWebTokenHandler().ReadJsonWebToken(token);
 
     private static Task<TokenValidationResult> ValidateAsync(string token, string key) =>

@@ -27,7 +27,14 @@ public interface IPasswordHasher
 /// <summary>A signed access token and its expiration (UTC).</summary>
 public sealed record AccessToken(string Token, DateTime ExpiresAt);
 
-/// <summary>Issues access tokens (JWT in Infrastructure).</summary>
+/// <summary>A new refresh token: the raw value (for the cookie only) and its hash (for the database only).</summary>
+public sealed record NewRefreshToken(string Token, string Hash)
+{
+    /// <summary>Never prints the raw token, so logging this record cannot leak it.</summary>
+    public override string ToString() => $"NewRefreshToken {{ Hash = {Hash} }}";
+}
+
+/// <summary>Issues access tokens (JWT in Infrastructure) and refresh tokens.</summary>
 public interface ITokenService
 {
     /// <summary>
@@ -35,4 +42,10 @@ public interface ITokenService
     /// (<see cref="Roles.Admin"/> or <see cref="Roles.User"/>).
     /// </summary>
     AccessToken CreateToken(User user);
+
+    /// <summary>An opaque, cryptographically random refresh token (not a JWT) and its SHA-256 hash.</summary>
+    NewRefreshToken CreateRefreshToken();
+
+    /// <summary>The SHA-256 hash (lower-case hex) under which a refresh token is stored.</summary>
+    string HashRefreshToken(string token);
 }

@@ -37,6 +37,7 @@ builder.Services.AddUiCors(builder.Configuration);
 
 // The signed-in user for the use cases (Application's ICurrentUser port).
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddSingleton<RefreshTokenCookie>();
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
 
 // OpenAPI document + Scalar API reference (T02.1), with the JWT Bearer scheme.

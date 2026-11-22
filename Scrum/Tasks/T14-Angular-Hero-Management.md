@@ -10,6 +10,13 @@ Provide a responsive, user-friendly UI for all hero CRUD operations. It is built
 - Signal `input()`s for route parameters.
 - Zoneless and OnPush, with no `.subscribe()` in components.
 
+## TDD (mandatory)
+Follow the [T12 TDD workflow](T12-Angular-Core.md#tdd-workflow-mandatory-for-t12-t13-and-t14): red → green → refactor, one behavior at a time, with evidence in the Implementation notes. Suggested order, each driven by its specs from the Tests section:
+1. `heroSchema` (pure): every field's boundaries, superpowers and state codes.
+2. `HeroApi`: resource URLs and parameters, refetch when the query signal changes, no request for an `undefined` id, write verbs and bodies.
+3. Shared components: chips input, paginator, confirm dialog.
+4. `HeroListComponent` → `HeroDetailComponent` → `HeroFormComponent` (create, edit, server errors, `canDeactivate`).
+
 ## Steps
 - [ ] **Models (`features/heroes/hero.models.ts`):** `Hero`, `HeroRequest`, `HeroQuery` (`search`, `page`, `pageSize`, `sortBy`, `sortDirection`) and `PagedResult<T>`, matching the API (T10). `birthDate` is a `yyyy-MM-dd` string, and `superpowers` is `string[]`.
 - [ ] **`HeroApi` (`features/heroes/hero.api.ts`)**:
@@ -100,3 +107,4 @@ Call `TestBed.tick()` so a resource issues its request, then flush it and `await
 - Every hero CRUD operation works end to end against the API, and the URL reflects search, sort and page.
 - The layout is usable at 360 px and on desktop, and there are no console warnings.
 - No manual `.subscribe()` in components, and no Reactive or template-driven forms. ESLint (T12 rules) passes.
+- **TDD evidence:** every spec listed in Tests was red before its implementation (recorded in the Implementation notes). `npm run test:coverage` meets 80% lines and branches for `features/heroes` and the shared components.

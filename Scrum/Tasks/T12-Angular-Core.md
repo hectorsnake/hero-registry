@@ -27,6 +27,23 @@ Verified against the installed Angular 22.3 packages. The APIs below are stable 
 | Forms | **Signal Forms** (`@angular/forms/signals`: `form()`, `schema()` with `required`/`email`/`pattern`/`validate`..., `[formField]` on inputs, `form[formRoot]`, `submit()`) in T13 and T14 | New Reactive Forms or template-driven forms |
 | Routing | Lazy `loadComponent` / `loadChildren`, functional guards, route params as signal `input()`s (`withComponentInputBinding()`) | Class guards, `ActivatedRoute` subscriptions |
 
+## TDD workflow (mandatory for T12, T13 and T14)
+The exercise requires Test-Driven Development, and the panel evaluates it. The **Steps** below say *what* to build. They are implemented **through** the tests in the **Tests** section, never before them.
+
+1. **Red:** write the spec (`*.spec.ts`) for one unit of behavior first: one service method, interceptor rule, guard or component behavior. Run `npm test`. It must **fail for the right reason**: an assertion failure, or a compile error because the symbol does not exist yet. A test that passes on its first run proves nothing, so fix the test.
+2. **Green:** write the minimum code that makes it pass, then run `npm test` again.
+3. **Refactor:** clean up with the tests green, then move to the next behavior.
+4. **Order of work:** models and pure helpers (`toFieldErrors`, schemas) → services (`AuthService`, `ToastService`) → interceptors and guards → components. Each layer is driven by its own specs, with its dependencies mocked.
+5. **Evidence:** in each task's *Implementation notes*, record the red runs, for example "AuthService: 9 specs written first, 9 failed (compile) → green". Commit tests together with their implementation, never implementation without tests.
+6. **What not to unit test:** framework wiring (`app.config.ts` provider lists), plain templates with no logic, and styles. These are covered by the build, lint and a manual smoke test.
+
+Test tooling:
+- Vitest through `@angular/build:unit-test` (already configured), with jsdom.
+- Add `@vitest/coverage-v8` and a `test:coverage` script (`ng test --coverage --watch=false`). Thresholds in the test configuration: **at least 80% lines and branches** for `src/app/core` and `src/app/features`. The build fails below that.
+- `HttpTestingController` for HTTP. `HttpTestingController.verify()` in `afterEach`, so no unexpected request goes unnoticed.
+- Vitest fake timers for debounce, auto-dismiss and the `refresh_race` retry delay. No real waiting in tests.
+- Test names describe behavior (`'retries the original request once with the new token'`), not methods.
+
 ## Steps
 - [ ] **Project setup:**
   - Confirm zoneless: `zone.js` stays out of `package.json` and `polyfills`. Keep `provideBrowserGlobalErrorListeners()`.
@@ -120,6 +137,7 @@ Zoneless testing rules:
 - DevTools → Application shows **no token in Local Storage or Session Storage**, and the `hr_refresh` cookie is `HttpOnly`.
 - Logging out in one tab logs out the others.
 - `npm test`, `npm run lint` and `npm run build` pass with no warnings, and the browser console is clean.
+- **TDD evidence:** every spec listed in Tests exists and was red before its implementation (recorded in the Implementation notes). `npm run test:coverage` meets the 80% line and branch thresholds for `core`.
 
 ## Presentation notes
 - **Signals:** "The app is zoneless and OnPush. Every piece of UI state is a signal or a computed value, reads use `httpResource`, forms use Signal Forms, and RxJS is kept for streams such as the token refresh in the interceptors."

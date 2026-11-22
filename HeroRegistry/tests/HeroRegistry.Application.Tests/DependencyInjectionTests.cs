@@ -32,6 +32,8 @@ public class DependencyInjectionTests
             .AddApplication()
             .AddScoped(_ => Substitute.For<IHeroRepository>())
             .AddScoped(_ => Substitute.For<IUserRepository>())
+            .AddScoped(_ => Substitute.For<IRefreshTokenRepository>())
+            .AddLogging()
             .AddSingleton(_ => Substitute.For<IPasswordHasher>())
             .AddSingleton(_ => Substitute.For<ITokenService>())
             .AddScoped(_ => Substitute.For<ICurrentUser>())
