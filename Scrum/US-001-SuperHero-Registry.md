@@ -199,9 +199,9 @@
 | T14 | [Angular hero management (list, detail, form, delete)](Tasks/T14-Angular-Hero-Management.md)  | UI              | 10 h     | T10, T12   |
 | T15 | [Docker Compose delivery](Tasks/T15-Docker-Compose.md)                                        | DevOps          | 4 h      | T10, T14   |
 | T16 | [CI pipeline (GitHub Actions)](Tasks/T16-CI-Pipeline.md)                                      | DevOps          | 2 h      | T01        |
-| T17 | [Documentation, GenAI write-up and presentation](Tasks/T17-Documentation-Presentation.md)     | Docs            | 4 h      | all        |
+| T17 | [Documentation, GenAI write-up and presentation](Tasks/T17-Documentation-Presentation.md)     | Docs            | 6 h      | all        |
 
-**Total estimate:** about 95 hours.
+**Total estimate:** about 97 hours.
 
 ### Suggested order
 
