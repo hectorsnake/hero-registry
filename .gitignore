@@ -5,3 +5,6 @@
 
 # Test output from `dotnet test` run at the repository root (results and coverage, T16).
 TestResults/
+
+# PowerPoint lock files, created while a deck is open (T17).
+~$*

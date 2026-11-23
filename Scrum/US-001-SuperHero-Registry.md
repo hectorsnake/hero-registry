@@ -6,7 +6,7 @@
 | **Epic**       | SuperHero Registry MVP                 |
 | **Priority**   | High                                   |
 | **Estimate**   | 21 story points                        |
-| **Status**     | To Do                                  |
+| **Status**     | In review (one Definition of Done item open) |
 
 ---
 
@@ -158,13 +158,13 @@
 
 ## Definition of Done
 
-- [ ] Code follows Clean Architecture dependency rules (verified by tests or a review).
-- [ ] Tests were written first (TDD) and pass. Back-end line coverage is at least 80% for Domain and Application.
-- [ ] All acceptance criteria are verified manually through the UI and through `HeroRegistry.Api.http`.
-- [ ] The CI pipeline passes (build and test for the back end and front end).
-- [ ] `docker compose up` works on a clean machine, using seeded demo data.
-- [ ] The README is updated with setup instructions, the architecture and demo credentials.
-- [ ] There are no warnings in the browser console.
+- [x] Code follows Clean Architecture dependency rules (verified by tests or a review). *Architecture tests in `Application.Tests` fail the build on a wrong reference.*
+- [x] Tests were written first (TDD) and pass. Back-end line coverage is at least 80% for Domain and Application. *1,116 tests; Domain 98.3%, Application 98.8% lines; red runs recorded in each task.*
+- [ ] All acceptance criteria are verified manually through the UI and through `HeroRegistry.Api.http`. *Open: AC1–AC10 and AC12 were verified in the browser (T12–T15 smoke tests), and every criterion has automated API tests. AC11 has no UI page, and the manual pass through `HeroRegistry.Api.http` is still to do.*
+- [x] The CI pipeline passes (build and test for the back end and front end). *GitHub Actions run #3 is green: back end, front end and the Docker smoke test.*
+- [x] `docker compose up` works on a clean machine, using seeded demo data. *Verified from an empty volume (T15) and in CI on a fresh runner.*
+- [x] The README is updated with setup instructions, the architecture and demo credentials.
+- [x] There are no warnings in the browser console. *The production build (Docker Compose) logged nothing; the dev server only shows dev-mode messages (T12–T15 notes).*
 
 ## Out of scope
 

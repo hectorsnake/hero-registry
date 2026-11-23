@@ -5,7 +5,7 @@
 A full-stack web application to register, search, update and retire superheroes.
 It is built with **.NET 10 (ASP.NET Core Web API)** using **Clean Architecture** and **Test-Driven Development**, a **SQL Server** database accessed through a custom **Reflection-based data layer** (no Entity Framework, Dapper or MediatR), and an **Angular** front end.
 
-> **Status:** in development. Work is tracked in the [`Scrum`](Scrum/) folder. See the user story [US-001](Scrum/US-001-SuperHero-Registry.md) and its [tasks](Scrum/Tasks/).
+> **Status:** MVP complete: every acceptance criterion of the user story is implemented and tested. Work is tracked in the [`Scrum`](Scrum/) folder. See the user story [US-001](Scrum/US-001-SuperHero-Registry.md) and its [tasks](Scrum/Tasks/).
 
 ---
 
@@ -26,7 +26,8 @@ It is built with **.NET 10 (ASP.NET Core Web API)** using **Clean Architecture**
 9. [Testing](#testing)
 10. [Design decisions](#design-decisions)
 11. [Generative AI usage](#generative-ai-usage)
-12. [Project management](#project-management)
+12. [Documentation and presentation](#documentation-and-presentation)
+13. [Project management](#project-management)
 
 ---
 
@@ -460,6 +461,8 @@ npm run lint
 
 Docker must be running for the Infrastructure tests.
 
+**Current numbers:** 1,116 automated tests (763 back end, 353 front end). Back-end line coverage by layer: Domain 98.3%, Application 98.8%, Infrastructure 95.4%, Api 77.9%. Front end: 97.9% lines and 93.4% branches.
+
 The test projects use **xUnit v3** on **Microsoft.Testing.Platform**. The `global.json` at the repository root opts `dotnet test` into that platform. This is why the command takes `--solution`.
 
 ### Continuous integration (GitHub Actions)
@@ -492,7 +495,16 @@ The jobs only read the repository (`permissions: contents: read`). A new push to
 
 ## Generative AI usage
 
-AI-assisted development (Claude Code) is used throughout the project. The prompts, a representative sample of the generated code, how the suggestions were validated, and what was corrected are documented in [`docs/genai.md`](docs/genai.md). That file also covers the task-management API exercise.
+AI-assisted development (Claude Code) is used throughout the project. The prompts, a representative sample of the generated code, how the suggestions were validated, and what was corrected are documented in [`docs/genai.md`](docs/genai.md). This project is the answer to the exercise's GenAI section: the API was generated with Claude Code, task by task.
+
+## Documentation and presentation
+
+| Document | Contents |
+| -------- | -------- |
+| [`docs/architecture.md`](docs/architecture.md) | Layers and the dependency rule, a request end to end, the Reflection data layer internals, migrations, the session and refresh-token flow, errors, observability, front end and delivery (with diagrams) |
+| [`docs/genai.md`](docs/genai.md) | The GenAI exercise, answered with this project: the prompts (user story, task files, skills) and why they are structured that way, a sample of the generated code, how it was validated, and what was corrected |
+| [`docs/presentation.md`](docs/presentation.md) | The presentation outline and the speaker notes for every slide |
+| [`docs/presentation/HeroRegistry.pptx`](docs/presentation/HeroRegistry.pptx) and [`.pdf`](docs/presentation/HeroRegistry.pdf) | The 17-slide deck (a PDF copy for reviewers without PowerPoint); screenshots in [`docs/presentation/images`](docs/presentation/images) |
 
 ## Project management
 
