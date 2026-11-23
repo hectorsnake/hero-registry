@@ -1,0 +1,116 @@
+.hero-form {
+  display: grid;
+  gap: var(--space-4);
+  max-inline-size: 48rem;
+
+  &__back {
+    display: inline-block;
+    margin-block-end: var(--space-3);
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 1.75rem;
+  }
+
+  &__group {
+    display: grid;
+    gap: var(--space-3);
+    margin: 0;
+    padding: var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-surface);
+
+    @media (min-width: 48rem) {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  &__field {
+    display: grid;
+    gap: var(--space-1);
+    align-content: start;
+  }
+
+  &__label {
+    font-weight: 600;
+  }
+
+  &__input {
+    inline-size: 100%;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-bg);
+    color: var(--color-text);
+    font: inherit;
+
+    &[aria-invalid='true'] {
+      border-color: var(--color-danger);
+    }
+  }
+
+  &__power {
+    display: flex;
+    gap: var(--space-3);
+    align-items: center;
+  }
+
+  &__range {
+    flex: 1;
+  }
+
+  &__number {
+    inline-size: 5rem;
+  }
+
+  &__alert:empty {
+    display: none;
+  }
+
+  &__error {
+    margin: 0;
+    color: var(--color-danger);
+    font-weight: 600;
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    justify-content: flex-end;
+  }
+
+  &__button {
+    padding: var(--space-2) var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--color-text);
+    font: inherit;
+    cursor: pointer;
+
+    &[data-variant='primary'] {
+      border-color: var(--color-primary);
+      background: var(--color-primary);
+      color: var(--color-on-primary);
+      font-weight: 600;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+
+  &__panel {
+    display: grid;
+    gap: var(--space-3);
+    justify-items: start;
+    padding: var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-surface);
+  }
+}

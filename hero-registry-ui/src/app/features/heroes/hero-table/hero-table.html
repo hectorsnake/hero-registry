@@ -1,0 +1,80 @@
+<table class="heroes">
+  <caption class="visually-hidden">
+    Heroes
+  </caption>
+  <thead>
+    <tr>
+      <th scope="col" [attr.aria-sort]="ariaSort('HeroName')">
+        <button type="button" class="heroes__sort" (click)="sortBy('HeroName')">
+          Hero name
+          @if (ariaSort('HeroName'); as dir) {
+            <span aria-hidden="true">{{ dir === 'ascending' ? '▲' : '▼' }}</span>
+          }
+        </button>
+      </th>
+      <th scope="col">Real name</th>
+      <th scope="col">Superpowers</th>
+      <th scope="col" [attr.aria-sort]="ariaSort('PowerLevel')">
+        <button type="button" class="heroes__sort" (click)="sortBy('PowerLevel')">
+          Power
+          @if (ariaSort('PowerLevel'); as dir) {
+            <span aria-hidden="true">{{ dir === 'ascending' ? '▲' : '▼' }}</span>
+          }
+        </button>
+      </th>
+      <th scope="col" class="heroes__created" [attr.aria-sort]="ariaSort('CreatedAt')">
+        <button type="button" class="heroes__sort" (click)="sortBy('CreatedAt')">
+          Created
+          @if (ariaSort('CreatedAt'); as dir) {
+            <span aria-hidden="true">{{ dir === 'ascending' ? '▲' : '▼' }}</span>
+          }
+        </button>
+      </th>
+      <th scope="col" class="heroes__actions">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (hero of heroes(); track hero.id) {
+      <tr>
+        <td class="heroes__name">{{ hero.heroName }}</td>
+        <td>{{ hero.firstName }} {{ hero.lastName }}</td>
+        <td><app-superpower-chips [superpowers]="hero.superpowers" /></td>
+        <td><app-power-meter [value]="hero.powerLevel" /></td>
+        <td class="heroes__created">{{ hero.createdAt | relativeTime }}</td>
+        <td class="heroes__actions">
+          <a
+            class="icon-button"
+            [routerLink]="['/heroes', hero.id]"
+            [attr.aria-label]="'View ' + hero.heroName"
+            [attr.title]="'View ' + hero.heroName"
+            [attr.data-testid]="'hero-list-view-button-' + hero.id"
+            ><span aria-hidden="true">👁</span></a
+          >
+          <a
+            class="icon-button"
+            [routerLink]="['/heroes', hero.id, 'edit']"
+            [attr.aria-label]="'Edit ' + hero.heroName"
+            [attr.title]="'Edit ' + hero.heroName"
+            [attr.data-testid]="'hero-list-edit-button-' + hero.id"
+            ><span aria-hidden="true">✏️</span></a
+          >
+          @if (canDelete()) {
+            <button
+              type="button"
+              class="icon-button"
+              data-variant="danger"
+              [attr.aria-label]="'Delete ' + hero.heroName"
+              [attr.title]="'Delete ' + hero.heroName"
+              [attr.data-testid]="'hero-list-delete-button-' + hero.id"
+              (click)="deleteRequested.emit(hero)"
+            >
+              <span aria-hidden="true">🗑</span>
+            </button>
+          } @else {
+            <span class="icon-button" data-variant="placeholder" aria-hidden="true"></span>
+          }
+        </td>
+      </tr>
+    }
+  </tbody>
+</table>

@@ -1,0 +1,39 @@
+<div class="chips" [attr.data-invalid]="showInvalid()">
+  <ul class="chips__list" aria-label="Added items">
+    @for (chip of value(); track chip) {
+      <li class="chips__chip" [attr.data-chip]="chip">
+        <span>{{ chip }}</span>
+        <button
+          type="button"
+          class="chips__remove"
+          [attr.aria-label]="'Remove ' + chip"
+          [disabled]="disabled()"
+          (click)="remove(chip)"
+        >
+          ×
+        </button>
+      </li>
+    }
+  </ul>
+  <input
+    #textInput
+    class="chips__input"
+    type="text"
+    autocomplete="off"
+    [id]="inputId()"
+    [attr.aria-describedby]="describedBy() + ' ' + inputId() + '-status'"
+    [attr.aria-invalid]="showInvalid()"
+    [disabled]="disabled() || full()"
+    [placeholder]="full() ? '' : 'Type and press Enter'"
+    (input)="onInput()"
+    (keydown)="onKeydown($event)"
+    (blur)="onBlur()"
+  />
+</div>
+<p class="chips__status" aria-live="polite" [id]="inputId() + '-status'">
+  @if (notice(); as message) {
+    {{ message }}
+  } @else {
+    {{ value().length }} of {{ limit() }}
+  }
+</p>

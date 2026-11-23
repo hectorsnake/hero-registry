@@ -1,0 +1,216 @@
+<a class="hero-form__back" [routerLink]="isEdit() ? ['/heroes', id()] : '/heroes'">‹ Back</a>
+
+@if (isEdit() && existing.isLoading()) {
+  <p class="hero-form__panel" aria-busy="true">Loading hero…</p>
+} @else if (notFound()) {
+  <section class="hero-form__panel" role="alert">
+    <h1 class="hero-form__title">Hero not found</h1>
+    <p>This hero does not exist or has been deleted.</p>
+    <a routerLink="/heroes">Go to the heroes list</a>
+  </section>
+} @else if (isEdit() && existing.error()) {
+  <section class="hero-form__panel" role="alert">
+    <p>Couldn't load this hero. Check your connection and try again.</p>
+    <button type="button" class="hero-form__button" (click)="existing.reload()">Retry</button>
+  </section>
+} @else {
+  <form class="hero-form" [formRoot]="heroForm" aria-labelledby="hero-form-title">
+    <h1 id="hero-form-title" class="hero-form__title">{{ title() }}</h1>
+
+    <fieldset class="hero-form__group">
+      <legend>Identity</legend>
+      <div class="hero-form__field">
+        <label class="hero-form__label" for="hero-heroName">Hero name</label>
+        <input
+          id="hero-heroName"
+          class="hero-form__input"
+          type="text"
+          autocomplete="off"
+          aria-describedby="hero-heroName-error"
+          [formField]="heroForm.heroName"
+          [attr.aria-invalid]="heroForm.heroName().touched() && heroForm.heroName().invalid()"
+        />
+        <app-form-field-error id="hero-heroName-error" [field]="heroForm.heroName" />
+      </div>
+      <div class="hero-form__field">
+        <label class="hero-form__label" for="hero-firstName">First name</label>
+        <input
+          id="hero-firstName"
+          class="hero-form__input"
+          type="text"
+          autocomplete="given-name"
+          aria-describedby="hero-firstName-error"
+          [formField]="heroForm.firstName"
+          [attr.aria-invalid]="heroForm.firstName().touched() && heroForm.firstName().invalid()"
+        />
+        <app-form-field-error id="hero-firstName-error" [field]="heroForm.firstName" />
+      </div>
+      <div class="hero-form__field">
+        <label class="hero-form__label" for="hero-lastName">Last name</label>
+        <input
+          id="hero-lastName"
+          class="hero-form__input"
+          type="text"
+          autocomplete="family-name"
+          aria-describedby="hero-lastName-error"
+          [formField]="heroForm.lastName"
+          [attr.aria-invalid]="heroForm.lastName().touched() && heroForm.lastName().invalid()"
+        />
+        <app-form-field-error id="hero-lastName-error" [field]="heroForm.lastName" />
+      </div>
+      <div class="hero-form__field">
+        <label class="hero-form__label" for="hero-birthDate">Birth date</label>
+        <input
+          id="hero-birthDate"
+          class="hero-form__input"
+          type="date"
+          autocomplete="bday"
+          aria-describedby="hero-birthDate-error"
+          [max]="today"
+          [formField]="heroForm.birthDate"
+          [attr.aria-invalid]="heroForm.birthDate().touched() && heroForm.birthDate().invalid()"
+        />
+        <app-form-field-error id="hero-birthDate-error" [field]="heroForm.birthDate" />
+      </div>
+      <div class="hero-form__field">
+        <label class="hero-form__label" for="hero-email">Email</label>
+        <input
+          id="hero-email"
+          class="hero-form__input"
+          type="email"
+          autocomplete="email"
+          aria-describedby="hero-email-error"
+          [formField]="heroForm.email"
+          [attr.aria-invalid]="heroForm.email().touched() && heroForm.email().invalid()"
+        />
+        <app-form-field-error id="hero-email-error" [field]="heroForm.email" />
+      </div>
+    </fieldset>
+
+    <fieldset class="hero-form__group">
+      <legend>Powers</legend>
+      <div class="hero-form__field">
+        <label class="hero-form__label" for="hero-superpowers">Superpowers</label>
+        <app-chips-input
+          inputId="hero-superpowers"
+          describedBy="hero-superpowers-error"
+          [formField]="heroForm.superpowers"
+        />
+        <app-form-field-error id="hero-superpowers-error" [field]="heroForm.superpowers" />
+      </div>
+      <div class="hero-form__field">
+        <label class="hero-form__label" for="hero-powerLevel">Power level</label>
+        <div class="hero-form__power">
+          <input
+            class="hero-form__range"
+            type="range"
+            aria-label="Power level slider"
+            [formField]="heroForm.powerLevel"
+          />
+          <input
+            id="hero-powerLevel"
+            class="hero-form__input hero-form__number"
+            type="number"
+            aria-describedby="hero-powerLevel-error"
+            [formField]="heroForm.powerLevel"
+            [attr.aria-invalid]="heroForm.powerLevel().touched() && heroForm.powerLevel().invalid()"
+          />
+        </div>
+        <app-form-field-error id="hero-powerLevel-error" [field]="heroForm.powerLevel" />
+      </div>
+    </fieldset>
+
+    <fieldset class="hero-form__group">
+      <legend>Address</legend>
+      <div class="hero-form__field">
+        <label class="hero-form__label" for="hero-address1">Address line 1</label>
+        <input
+          id="hero-address1"
+          class="hero-form__input"
+          type="text"
+          autocomplete="address-line1"
+          aria-describedby="hero-address1-error"
+          [formField]="heroForm.address1"
+          [attr.aria-invalid]="heroForm.address1().touched() && heroForm.address1().invalid()"
+        />
+        <app-form-field-error id="hero-address1-error" [field]="heroForm.address1" />
+      </div>
+      <div class="hero-form__field">
+        <label class="hero-form__label" for="hero-address2">Address line 2</label>
+        <input
+          id="hero-address2"
+          class="hero-form__input"
+          type="text"
+          autocomplete="address-line2"
+          aria-describedby="hero-address2-error"
+          [formField]="heroForm.address2"
+          [attr.aria-invalid]="heroForm.address2().touched() && heroForm.address2().invalid()"
+        />
+        <app-form-field-error id="hero-address2-error" [field]="heroForm.address2" />
+      </div>
+      <div class="hero-form__field">
+        <label class="hero-form__label" for="hero-city">City</label>
+        <input
+          id="hero-city"
+          class="hero-form__input"
+          type="text"
+          autocomplete="address-level2"
+          aria-describedby="hero-city-error"
+          [formField]="heroForm.city"
+          [attr.aria-invalid]="heroForm.city().touched() && heroForm.city().invalid()"
+        />
+        <app-form-field-error id="hero-city-error" [field]="heroForm.city" />
+      </div>
+      <div class="hero-form__field">
+        <label class="hero-form__label" for="hero-state">State</label>
+        <select
+          id="hero-state"
+          class="hero-form__input"
+          autocomplete="address-level1"
+          aria-describedby="hero-state-error"
+          [formField]="heroForm.state"
+          [attr.aria-invalid]="heroForm.state().touched() && heroForm.state().invalid()"
+        >
+          <option value="">Choose a state…</option>
+          @for (state of states; track state.code) {
+            <option [value]="state.code">{{ state.name }} ({{ state.code }})</option>
+          }
+        </select>
+        <app-form-field-error id="hero-state-error" [field]="heroForm.state" />
+      </div>
+      <div class="hero-form__field">
+        <label class="hero-form__label" for="hero-zipCode">ZIP code</label>
+        <input
+          id="hero-zipCode"
+          class="hero-form__input"
+          type="text"
+          autocomplete="postal-code"
+          aria-describedby="hero-zipCode-error"
+          inputmode="numeric"
+          [formField]="heroForm.zipCode"
+          [attr.aria-invalid]="heroForm.zipCode().touched() && heroForm.zipCode().invalid()"
+        />
+        <app-form-field-error id="hero-zipCode-error" [field]="heroForm.zipCode" />
+      </div>
+    </fieldset>
+
+    <div class="hero-form__alert" aria-live="polite">
+      @if (serverError(); as error) {
+        <p class="hero-form__error" role="alert">{{ error }}</p>
+      }
+    </div>
+
+    <div class="hero-form__actions">
+      <button type="button" class="hero-form__button" (click)="cancel()">Cancel</button>
+      <button
+        type="submit"
+        class="hero-form__button"
+        data-variant="primary"
+        [disabled]="pending()"
+        [attr.aria-busy]="pending()"
+      >
+        {{ pending() ? 'Saving…' : 'Save hero' }}
+      </button>
+    </div>
+  </form>
+}

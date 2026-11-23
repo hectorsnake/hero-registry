@@ -1,0 +1,81 @@
+<section class="hero-list" aria-labelledby="hero-list-title">
+  <header class="hero-list__toolbar">
+    <h1 #heading id="hero-list-title" class="hero-list__title" tabindex="-1">Heroes</h1>
+    <a
+      class="hero-list__add"
+      routerLink="/heroes/new"
+      data-testid="hero-list-add-button"
+      [attr.data-full]="viewport.isMobile()"
+      >+ Add hero</a
+    >
+    <input
+      class="hero-list__search"
+      type="search"
+      aria-label="Search heroes"
+      placeholder="Search heroes…"
+      [value]="searchText()"
+      (input)="searchText.set($any($event.target).value)"
+    />
+    <p class="hero-list__count" aria-live="polite">
+      @if (heroes.hasValue()) {
+        {{ countText() }}
+      }
+    </p>
+  </header>
+
+  @if (heroes.isLoading()) {
+    <div class="hero-list__skeleton" aria-busy="true">
+      <span class="visually-hidden">Loading heroes…</span>
+      @for (row of skeletonRows; track row) {
+        <div class="hero-list__skeleton-row" aria-hidden="true"></div>
+      }
+    </div>
+  } @else if (heroes.error()) {
+    <div class="hero-list__panel" role="alert">
+      <p>Couldn't load the heroes. Check your connection and try again.</p>
+      <button type="button" class="hero-list__button" (click)="heroes.reload()">Retry</button>
+    </div>
+  } @else if (items().length === 0) {
+    <div class="hero-list__panel">
+      @if (query().search; as term) {
+        <p>No heroes match '{{ term }}'.</p>
+        <button type="button" class="hero-list__button" (click)="clearSearch()">
+          Clear search
+        </button>
+      } @else {
+        <p>No heroes yet.</p>
+        <a class="hero-list__add" routerLink="/heroes/new" data-empty-action>Register a hero</a>
+      }
+    </div>
+  } @else {
+    @if (viewport.isMobile()) {
+      <div class="hero-list__cards">
+        @for (hero of items(); track hero.id) {
+          <app-hero-card
+            [hero]="hero"
+            [canDelete]="auth.isAdmin()"
+            (deleteRequested)="askDelete($event)"
+          />
+        }
+      </div>
+    } @else {
+      <app-hero-table
+        [heroes]="items()"
+        [canDelete]="auth.isAdmin()"
+        [sort]="sort()"
+        (sortChange)="changeSort($event)"
+        (deleteRequested)="askDelete($event)"
+      />
+    }
+    <app-paginator [page]="page()" [totalPages]="totalPages()" (pageChange)="goToPage($event)" />
+  }
+</section>
+
+<app-confirm-dialog
+  [(open)]="confirmOpen"
+  [title]="'Delete ' + (heroToDelete()?.heroName ?? '') + '?'"
+  message="This hero will no longer appear in the registry."
+  confirmLabel="Delete"
+  [pending]="deleting()"
+  (confirmed)="confirmDelete()"
+/>

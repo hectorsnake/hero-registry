@@ -1,0 +1,81 @@
+<a class="detail__back" routerLink="/heroes" [queryParams]="listQuery()">‹ Back to heroes</a>
+
+@if (hero.isLoading()) {
+  <p class="detail__panel" aria-busy="true">Loading hero…</p>
+} @else if (notFound()) {
+  <section class="detail__panel" role="alert">
+    <h1 class="detail__title">Hero not found</h1>
+    <p>This hero does not exist or has been deleted.</p>
+    <a routerLink="/heroes">Go to the heroes list</a>
+  </section>
+} @else if (hero.error()) {
+  <section class="detail__panel" role="alert">
+    <p>Couldn't load this hero. Check your connection and try again.</p>
+    <button type="button" class="detail__button" (click)="hero.reload()">Retry</button>
+  </section>
+} @else if (hero.value(); as h) {
+  <article class="detail" aria-labelledby="hero-detail-title">
+    <header class="detail__header">
+      <h1 id="hero-detail-title" class="detail__title">{{ h.heroName }}</h1>
+      <div class="detail__actions">
+        <a class="detail__button" [routerLink]="['/heroes', h.id, 'edit']">✏️ Edit</a>
+        @if (auth.isAdmin()) {
+          <button
+            type="button"
+            class="detail__button"
+            data-variant="danger"
+            [attr.aria-label]="'Delete ' + h.heroName"
+            (click)="confirmOpen.set(true)"
+          >
+            🗑 Delete
+          </button>
+        }
+      </div>
+    </header>
+
+    <dl class="detail__fields">
+      <dt>Real name</dt>
+      <dd>{{ h.firstName }} {{ h.lastName }}</dd>
+      <dt>Birth date</dt>
+      <dd>{{ h.birthDate }}</dd>
+      <dt>Email</dt>
+      <dd>{{ h.email }}</dd>
+      <dt>Superpowers</dt>
+      <dd>
+        <app-superpower-chips [superpowers]="h.superpowers" [visible]="h.superpowers.length" />
+      </dd>
+      <dt>Power level</dt>
+      <dd><app-power-meter [value]="h.powerLevel" /></dd>
+      <dt>Address</dt>
+      <dd>
+        {{ h.address1 }}
+        @if (h.address2) {
+          <br />{{ h.address2 }}
+        }
+        <br />{{ h.city }}, {{ h.state }} {{ h.zipCode }}
+      </dd>
+    </dl>
+
+    @defer (on viewport) {
+      <section class="detail__audit" aria-label="History">
+        <p>Created {{ h.createdAt | relativeTime }} by user #{{ h.createdBy }}</p>
+        @if (h.updatedAt) {
+          <p>Updated {{ h.updatedAt | relativeTime }} by user #{{ h.updatedBy }}</p>
+        } @else {
+          <p>Never updated</p>
+        }
+      </section>
+    } @placeholder {
+      <p class="detail__audit">History…</p>
+    }
+  </article>
+
+  <app-confirm-dialog
+    [(open)]="confirmOpen"
+    [title]="'Delete ' + h.heroName + '?'"
+    message="This hero will no longer appear in the registry."
+    confirmLabel="Delete"
+    [pending]="deleting()"
+    (confirmed)="confirmDelete()"
+  />
+}
