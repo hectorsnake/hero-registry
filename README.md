@@ -1,5 +1,7 @@
 # SuperHero Registry
 
+[![CI](https://github.com/hectorsnake/hero-registry/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/hectorsnake/hero-registry/actions/workflows/ci.yml)
+
 A full-stack web application to register, search, update and retire superheroes.
 It is built with **.NET 10 (ASP.NET Core Web API)** using **Clean Architecture** and **Test-Driven Development**, a **SQL Server** database accessed through a custom **Reflection-based data layer** (no Entity Framework, Dapper or MediatR), and an **Angular** front end.
 
@@ -438,8 +440,8 @@ The project is developed with **TDD** (red, green, refactor).
 # Back end: all test projects
 dotnet test --solution HeroRegistry/HeroRegistry.slnx
 
-# Back end with coverage (Cobertura report in each project's TestResults folder)
-dotnet test --solution HeroRegistry/HeroRegistry.slnx --coverage --coverage-output-format cobertura
+# Back end with coverage (one Cobertura file per test project, in TestResults/ at the repository root)
+dotnet test --solution HeroRegistry/HeroRegistry.slnx --coverage --coverage-output-format cobertura --results-directory TestResults
 
 # Front end (Vitest, zoneless): single run, coverage (fails below 80% lines or branches), lint
 cd hero-registry-ui
@@ -459,6 +461,18 @@ npm run lint
 Docker must be running for the Infrastructure tests.
 
 The test projects use **xUnit v3** on **Microsoft.Testing.Platform**. The `global.json` at the repository root opts `dotnet test` into that platform. This is why the command takes `--solution`.
+
+### Continuous integration (GitHub Actions)
+
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on every push to `main`, on every pull request, and on demand (**Run workflow**). A failing build, test, lint error or coverage threshold fails the run.
+
+| Job | Runs |
+| --- | ---- |
+| **Back end** | `dotnet restore`, then `build -c Release` (warnings are errors in `src`), then every test project, including the SQL Server integration tests (Docker is available on `ubuntu-latest`). Test results and Cobertura coverage are uploaded as the `backend-test-results` artifact. |
+| **Front end** | `npm ci`, then lint, the production build and Vitest with coverage (80% lines and branches). The report is uploaded as `frontend-coverage`. |
+| **Docker** | Only after both pass: `docker compose build`, then the whole stack with throwaway secrets. It checks `/health`, that the UI serves the app, and an Admin login through nginx with the seeded heroes. Then `docker compose down -v`. |
+
+The jobs only read the repository (`permissions: contents: read`). A new push to a pull request cancels its previous run.
 
 ## Design decisions
 

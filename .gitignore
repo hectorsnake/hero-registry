@@ -2,3 +2,6 @@
 .env
 .env.*
 !.env.example
+
+# Test output from `dotnet test` run at the repository root (results and coverage, T16).
+TestResults/
