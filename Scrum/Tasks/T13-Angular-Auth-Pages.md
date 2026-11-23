@@ -119,6 +119,16 @@ Final run: **18 files, 188 tests passed**. Coverage of `core`, `features`, `shar
 - **File names** follow the Angular style guide used in T12: `auth-schemas.ts`, `form-field-error.ts`.
 - **Messages:** `FormFieldError` (in `shared`) shows the error's own message, because `shared` must not import a feature. Every auth rule passes its message from `AUTH_MESSAGES`, which is the single message map, and `errorMessage()` resolves a message by kind for errors that have none.
 
+### Bug fix after delivery: "Your session has expired" right after signing in (Aspire only)
+- **Symptom:** under Aspire, signing in immediately showed `/login?returnUrl=%2Fheroes&reason=expired`.
+- **Cause:**
+  - `proxy.conf.mjs` preferred the API's **http** endpoint. Under Aspire the API also has an https endpoint, so `UseHttpsRedirection` answered every proxied call with `307 → https://localhost:7227/...`.
+  - The browser followed the redirect to another origin. There it ignored the refresh cookie's `Set-Cookie` (a cross-origin response without credentials), and it dropped the `Authorization` header on the cross-origin redirect.
+  - So `GET /api/auth/me` returned 401, the refresh had no cookie (`auth.refresh_invalid`), and the refresh interceptor sent the user to the login page.
+  - The T12 and T13 smoke tests missed it because the API ran on its own there, with no https port, so it never redirected.
+- **Fix:** the proxy prefers `services__api__https__0` (with `secure: false` for the dev certificate) and falls back to http. The browser now only ever talks to `localhost:4200`.
+- **Verified** against the running Aspire API through a second dev server on port 4300: login returned 200 with `Set-Cookie: hr_refresh` (HttpOnly, Secure, SameSite=Strict, `Path=/api/auth`), with no redirect. `/me` returned 200, refresh 200 and logout 204.
+
 ### Smoke test (Chrome, real API through the dev proxy)
 - **Register (desktop):**
   - The checklist updated live while typing.
