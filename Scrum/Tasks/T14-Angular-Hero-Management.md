@@ -14,7 +14,7 @@ Provide a responsive, user-friendly UI for all hero CRUD operations. It is built
 Follow the [T12 TDD workflow](T12-Angular-Core.md#tdd-workflow-mandatory-for-t12-t13-and-t14): red → green → refactor, one behavior at a time, with evidence in the Implementation notes. Suggested order, each driven by its specs from the Tests section:
 1. `heroSchema` (pure): every field's boundaries, superpowers and state codes.
 2. `HeroApi`: resource URLs and parameters, refetch when the query signal changes, no request for an `undefined` id, write verbs and bodies.
-3. Shared components: chips input, paginator, confirm dialog.
+3. Shared components: chips input, paginator, confirm dialog. Then the presentational `HeroTableComponent` and `HeroCardComponent` (columns, sort headers, actions column, admin-only Delete).
 4. `HeroListComponent` → `HeroDetailComponent` → `HeroFormComponent` (create, edit, server errors, `canDeactivate`).
 
 ## Steps
@@ -30,18 +30,56 @@ Follow the [T12 TDD workflow](T12-Angular-Core.md#tdd-workflow-mandatory-for-t12
   - `query = computed(() => ({ ... }))` feeds `heroesResource(query)`.
   - Changing the search, sort or page calls `router.navigate([], { queryParams, queryParamsHandling: 'merge' })`, so the list is shareable and the back button works.
   - **Search box:** a local `searchText = linkedSignal(() => this.search() ?? '')`, debounced at 300 ms with `toObservable` + `debounceTime` + `toSignal`, before writing the URL. A new search resets `page` to 1.
-  - **States** from the resource signals:
+  - **Page layout:**
+    ```
+    ┌──────────────────────────────────────────────────────────────────────────┐
+    │ Heroes                                                   [ + Add hero ]  │
+    │ [ 🔍 Search heroes...            ]                     12 heroes found   │
+    ├───────────────┬──────────────────┬──────────────┬───────┬────────────────┤
+    │ Hero name ▲   │ Real name        │ Superpowers  │ Power │ Actions        │
+    ├───────────────┼──────────────────┼──────────────┼───────┼────────────────┤
+    │ Spider-Man    │ Peter Parker     │ [Agility] +2 │ ███░  │ 👁  ✏️  🗑     │
+    │ Superman      │ Clark Kent       │ [Flight] +3  │ ████  │ 👁  ✏️  🗑     │
+    ├───────────────┴──────────────────┴──────────────┴───────┴────────────────┤
+    │                                          ‹ Prev   Page 1 of 3   Next ›   │
+    └──────────────────────────────────────────────────────────────────────────┘
+    ```
+  - **Toolbar** (above the table):
+    - The page title "Heroes".
+    - An **"+ Add hero"** primary button, a `routerLink` to `/heroes/new`. It is visible to **every signed-in user** (AC4) and is always shown, not only in the empty state.
+    - The search box.
+    - A result count from `totalCount`, in an `aria-live="polite"` region.
+  - **Table (desktop)**, `@for (hero of items(); track hero.id)`. Columns, in order:
+
+    | Column | Content | Sortable (`sortBy`) |
+    | ------ | ------- | ------------------- |
+    | Hero name | `heroName` (bold) | ✅ `HeroName` |
+    | Real name | `firstName lastName` | No |
+    | Superpowers | The first 2 as chips, then a "+N" chip with the full list in its `title` and `aria-label` | No |
+    | Power | A bar with `role="meter"`, `aria-valuenow`, `aria-valuemin="1"`, `aria-valuemax="100"`, and the number | ✅ `PowerLevel` |
+    | Created | Relative date (`createdAt`), hidden below 1024 px | ✅ `CreatedAt` |
+    | **Actions** (last column, right-aligned) | **View**, **Edit** and **Delete** icon buttons | No |
+
+    - **Sorting:** click a sortable header to sort by that column (ascending). Click again to toggle the direction. The header shows ▲ or ▼ and sets `aria-sort`. Sort state lives in the URL (`sortBy`, `sortDirection`).
+    - Hero names and the other cells are plain text. Navigation happens only through the action buttons, so a row has one clear click target per action.
+  - **Actions column** (per row):
+    - **View** (eye icon): a `routerLink` to `/heroes/:id`.
+    - **Edit** (pencil icon): a `routerLink` to `/heroes/:id/edit`.
+    - **Delete** (trash icon): rendered **only** `@if (auth.isAdmin())` (AC8). It opens the confirm dialog (see Delete). Regular users see only View and Edit, and the column keeps its width so the layout doesn't jump.
+    - Each is a real `<a>` or `<button>` with an `aria-label` that includes the hero ("View Superman", "Edit Superman", "Delete Superman") and a matching `title` tooltip. They are reachable by Tab in order.
+    - Test ids (if the e2e convention is used): `hero-list-view-button-{id}`, `hero-list-edit-button-{id}`, `hero-list-delete-button-{id}`, `hero-list-add-button`.
+  - **Cards (mobile, `viewport.isMobile()`)**: one card per hero with the hero name, real name, superpower chips and power bar. The same **View / Edit / Delete** actions sit in a footer row, with Delete for admins only. "+ Add hero" stays at the top of the page and becomes full width.
+  - **States** from the resource signals (the toolbar stays visible in every state):
     - `@if (heroes.isLoading())` shows skeleton rows.
     - `@else if (heroes.error())` shows an error panel with a **Retry** button (`heroes.reload()`).
-    - `@else if (heroes.value()?.items.length === 0)` shows an empty state with a "Register a hero" call to action.
-    - `@else`, the list.
-  - **Layout:** a table on desktop and cards on mobile, switched by `viewport.isMobile()` (T12). `@for (hero of items(); track hero.id)`.
-  - Superpowers are shown as chips, and the power level as a bar with `aria-valuenow`.
-  - **Paginator component** (`shared`): `page = model.required<number>()`, `totalPages = input.required<number>()` and `pageSize = input<number>()`. Keyboard accessible.
+    - `@else if (heroes.value()?.items.length === 0)` shows an empty state. With no search: "No heroes yet" with a "Register a hero" button to `/heroes/new`. With a search: "No heroes match '…'" with a "Clear search" button.
+    - `@else`, the table or the cards.
+  - **Paginator component** (`shared`), below the table: `page = model.required<number>()`, `totalPages = input.required<number>()` and `pageSize = input<number>()`. Prev and Next are disabled at the ends, and it shows "Page X of Y". Keyboard accessible.
+  - Keep `HeroListComponent` thin: `HeroTableComponent` and `HeroCardComponent` are presentational, with `heroes = input.required<Hero[]>()`, `canDelete = input<boolean>()` and a `deleteRequested = output<Hero>()`. The list page owns the dialog and the API call.
 - [ ] **`HeroDetailComponent` (`/heroes/:id`):**
   - `id = input.required<number, string>({ transform: numberAttribute })` and `hero = heroResource(this.id)`.
   - Read-only view with audit info (created and updated by and at, with relative time through a pipe).
-  - Edit button, and a Delete button `@if (auth.isAdmin())`.
+  - Edit button, and a Delete button `@if (auth.isAdmin())`, plus a "Back to heroes" link that keeps the list's query parameters (search, sort and page).
   - A 404 (`hero.not_found`) shows a "Hero not found" panel with a link back to the list.
 - [ ] **`HeroFormComponent` (`/heroes/new` and `/heroes/:id/edit`), with Signal Forms:**
   - `id = input<number | undefined, string | undefined>(undefined, { transform: ... })`, `isEdit = computed(() => this.id() !== undefined)` and `existing = heroResource(this.id)`.
@@ -66,17 +104,20 @@ Follow the [T12 TDD workflow](T12-Angular-Core.md#tdd-workflow-mandatory-for-t12
     - **400 / 409** are mapped with `toFieldErrors(problem)` and returned from the action, so they attach to the fields (for example a 409 with `errors.heroName` shows "This hero name is already registered").
     - On success: a toast ("Hero saved"), then navigate to the detail page.
     - `pending` signal for the submit button.
+  - A **Cancel** button returns to where the user came from (the list or the detail page), subject to the unsaved-changes guard.
   - **Unsaved-changes guard:** a functional `canDeactivate` that asks for confirmation when `heroForm().dirty()` and the form wasn't just saved (a `saved = signal(false)`).
 - [ ] **Delete** (admins only):
-  - The button is visible only when `auth.isAdmin()`. It opens the shared confirm dialog (`<dialog>`-based, with `open = model<boolean>()`), naming the hero.
-  - On confirm: `heroApi.delete(id)`, then a toast ("Hero deleted"), then `heroes.reload()` on the list, or navigate to the list from the detail page.
+  - Available from the list's **Actions column** (table and cards) and from the detail page, visible only when `auth.isAdmin()`.
+  - It opens the shared confirm dialog (`<dialog>`-based, with `open = model<boolean>()`): "Delete Superman? This hero will no longer appear in the registry." The buttons are **Cancel** (focused by default) and **Delete** (danger style, disabled while the request is pending).
+  - On confirm: `heroApi.delete(id)`, then a toast ("Hero deleted"), then `heroes.reload()` on the list (if the page becomes empty, go back one page), or navigate to the list from the detail page.
   - A 403 is handled by T12's `errorInterceptor` toast. A 404 means it was already deleted, so reload.
 - [ ] **Performance:**
   - The form route and the chips input are lazy-loaded (`loadComponent`).
   - `@defer (on viewport)` for heavy, non-critical blocks (for example the audit timeline).
   - `track hero.id` in every `@for`.
 - [ ] **Accessibility:**
-  - Table headers use `scope` and `aria-sort` on the sorted column.
+  - The table has a `<caption>` (visually hidden), headers use `scope="col"`, and the sorted column has `aria-sort`. Sortable headers are `<button>`s inside the `<th>`.
+  - Icon-only action buttons have `aria-label`s that name the hero, and a visible focus ring.
   - Errors use `aria-describedby` (`FormFieldErrorComponent` from T13).
   - Focus returns to the list after a delete.
 
@@ -93,8 +134,13 @@ Call `TestBed.tick()` so a resource issues its request, then flush it and `await
 - [ ] **`HeroListComponent`:**
   - The query parameter inputs drive the request.
   - Search is debounced (Vitest fake timers) and resets the page to 1.
-  - The loading, error with retry, and empty states render.
-  - The delete action is hidden for non-admins, and confirming calls delete and reloads.
+  - The loading, error with retry, and empty states render. The empty state differs with and without a search. The toolbar is visible in every state.
+  - **"+ Add hero"** is shown to a regular user and links to `/heroes/new`.
+  - The table renders the columns in order (Hero name, Real name, Superpowers, Power, Created, Actions), one row per hero, and the "+N" superpower chip.
+  - Clicking a sortable header writes `sortBy` to the URL, a second click toggles `sortDirection`, and `aria-sort` follows.
+  - **Actions column:** View links to `/heroes/:id` and Edit to `/heroes/:id/edit`, with `aria-label`s naming the hero.
+  - **Delete is hidden for regular users** and shown for admins. Clicking it opens the dialog naming the hero. Cancel calls nothing. Confirm calls delete, shows the toast and reloads. Deleting the last row of a page goes back one page.
+  - On mobile (`isMobile()` true), cards render instead of the table, with the same actions.
 - [ ] **`HeroDetailComponent`:** loads by the `id` input, and a 404 shows the not-found panel.
 - [ ] **`HeroFormComponent`:**
   - Create mode starts empty. Edit mode fills from the resource through `linkedSignal`.
