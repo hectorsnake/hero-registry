@@ -2,24 +2,21 @@ import { HttpContextToken, HttpErrorResponse, HttpInterceptorFn } from '@angular
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, switchMap, throwError } from 'rxjs';
-import { ToastService } from '../ui/toast-service';
 import { AuthService } from './auth-service';
 import { isApiRequest, isTokenEndpoint } from './auth-urls';
 
 /** Marks a request that was already retried after a refresh, so it is never retried twice. */
 export const RETRIED = new HttpContextToken<boolean>(() => false);
 
-export const SESSION_EXPIRED_MESSAGE = 'Your session has expired. Please sign in again.';
-
 /**
  * Silent session renewal (AC12): a 401 from the API means the 15-minute access token expired. Refresh it
  * with the HttpOnly cookie (one shared request for parallel 401s) and retry the request once. Only when
- * the refresh itself fails is the user sent to the login page, with a `returnUrl` to come back to.
+ * the refresh itself fails is the user sent to the login page, with a `returnUrl` to come back to
+ * and `reason=expired`, so the page can explain why.
  */
 export const refreshInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
   const router = inject(Router);
-  const toasts = inject(ToastService);
 
   return next(req).pipe(
     catchError((error: unknown) => {
@@ -37,8 +34,10 @@ export const refreshInterceptor: HttpInterceptorFn = (req, next) => {
       return auth.refresh().pipe(
         catchError(() => {
           auth.clearSession();
-          toasts.show(SESSION_EXPIRED_MESSAGE, 'warning');
-          void router.navigate(['/login'], { queryParams: { returnUrl: router.url } });
+          // The login page shows "Your session has expired" for reason=expired (T13).
+          void router.navigate(['/login'], {
+            queryParams: { returnUrl: router.url, reason: 'expired' },
+          });
           return throwError(() => error);
         }),
         switchMap((token) =>

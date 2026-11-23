@@ -17,6 +17,10 @@ export const adminGuard: CanActivateFn = (_route, state) => {
   return auth.isAdmin() || inject(Router).createUrlTree(['/heroes']);
 };
 
+/** The login and register pages are for signed-out visitors; signed-in users go to the heroes list. */
+export const guestGuard: CanActivateFn = () =>
+  !inject(AuthService).isAuthenticated() || inject(Router).createUrlTree(['/heroes']);
+
 function toLogin(returnUrl: string): UrlTree {
   return inject(Router).createUrlTree(['/login'], { queryParams: { returnUrl } });
 }

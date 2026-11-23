@@ -1,0 +1,115 @@
+<main class="auth-page">
+  <section class="auth-card" aria-labelledby="register-title">
+    <h1 id="register-title" class="auth-card__title">Create an account</h1>
+
+    <form class="auth-form" [formRoot]="registerForm">
+      <div class="auth-form__field">
+        <label class="auth-form__label" for="register-user-name">User name</label>
+        <input
+          id="register-user-name"
+          class="auth-form__input"
+          type="text"
+          autocomplete="username"
+          aria-describedby="register-user-name-error"
+          [formField]="registerForm.userName"
+          [attr.aria-invalid]="
+            registerForm.userName().touched() && registerForm.userName().invalid()
+          "
+        />
+        <app-form-field-error id="register-user-name-error" [field]="registerForm.userName" />
+      </div>
+
+      <div class="auth-form__field">
+        <label class="auth-form__label" for="register-email">Email</label>
+        <input
+          id="register-email"
+          class="auth-form__input"
+          type="email"
+          autocomplete="email"
+          aria-describedby="register-email-error"
+          [formField]="registerForm.email"
+          [attr.aria-invalid]="registerForm.email().touched() && registerForm.email().invalid()"
+        />
+        <app-form-field-error id="register-email-error" [field]="registerForm.email" />
+      </div>
+
+      <div class="auth-form__field">
+        <label class="auth-form__label" for="register-password">Password</label>
+        <div class="auth-form__password">
+          <input
+            id="register-password"
+            class="auth-form__input"
+            autocomplete="new-password"
+            aria-describedby="register-password-error register-password-rules"
+            [type]="showPassword() ? 'text' : 'password'"
+            [formField]="registerForm.password"
+            [attr.aria-invalid]="
+              registerForm.password().touched() && registerForm.password().invalid()
+            "
+          />
+          <button
+            type="button"
+            class="auth-form__reveal"
+            aria-label="Show password"
+            aria-controls="register-password register-confirm-password"
+            [attr.aria-pressed]="showPassword()"
+            (click)="showPassword.set(!showPassword())"
+          >
+            {{ showPassword() ? 'Hide' : 'Show' }}
+          </button>
+        </div>
+        <app-form-field-error id="register-password-error" [field]="registerForm.password" />
+        <ul id="register-password-rules" class="auth-form__checklist" aria-label="Password rules">
+          @for (rule of checklist(); track rule.id) {
+            <li class="auth-form__rule" [attr.data-rule]="rule.id" [attr.data-met]="rule.met">
+              <span aria-hidden="true">{{ rule.met ? '✓' : '✗' }}</span>
+              {{ rule.label }}
+              <span class="visually-hidden">{{ rule.met ? '(met)' : '(not met)' }}</span>
+            </li>
+          }
+        </ul>
+      </div>
+
+      <div class="auth-form__field">
+        <label class="auth-form__label" for="register-confirm-password">Confirm password</label>
+        <input
+          id="register-confirm-password"
+          class="auth-form__input"
+          autocomplete="new-password"
+          aria-describedby="register-confirm-password-error"
+          [type]="showPassword() ? 'text' : 'password'"
+          [formField]="registerForm.confirmPassword"
+          [attr.aria-invalid]="
+            registerForm.confirmPassword().touched() && registerForm.confirmPassword().invalid()
+          "
+        />
+        <app-form-field-error
+          id="register-confirm-password-error"
+          [field]="registerForm.confirmPassword"
+        />
+      </div>
+
+      <div class="auth-form__alert" aria-live="polite">
+        @if (serverError(); as error) {
+          <p class="auth-form__error" role="alert">{{ error }}</p>
+        }
+      </div>
+
+      <button
+        type="submit"
+        class="auth-form__submit"
+        [disabled]="pending()"
+        [attr.aria-busy]="pending()"
+      >
+        @if (pending()) {
+          <span class="auth-form__spinner" aria-hidden="true"></span> Creating your account…
+        } @else {
+          Create account
+        }
+      </button>
+    </form>
+
+    <p class="auth-card__switch">Already registered? <a routerLink="/login">Sign in</a></p>
+  </section>
+</main>
+<app-toast-outlet />

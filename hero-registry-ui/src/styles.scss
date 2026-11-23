@@ -49,3 +49,13 @@ body {
   font-family: var(--font);
   line-height: 1.5;
 }
+
+/* Text for screen readers only (for example the met / not met state of a checklist item). */
+.visually-hidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

@@ -1,0 +1,77 @@
+<main class="auth-page">
+  <section class="auth-card" aria-labelledby="login-title">
+    <h1 id="login-title" class="auth-card__title">Sign in</h1>
+
+    @if (reason() === 'expired') {
+      <p class="auth-card__notice" role="status">{{ messages.sessionExpired }}</p>
+    }
+
+    <form class="auth-form" [formRoot]="loginForm">
+      <div class="auth-form__field">
+        <label class="auth-form__label" for="login-user-name">User name</label>
+        <input
+          id="login-user-name"
+          class="auth-form__input"
+          type="text"
+          autocomplete="username"
+          aria-describedby="login-user-name-error"
+          [formField]="loginForm.userName"
+          [attr.aria-invalid]="loginForm.userName().touched() && loginForm.userName().invalid()"
+        />
+        <app-form-field-error id="login-user-name-error" [field]="loginForm.userName" />
+      </div>
+
+      <div class="auth-form__field">
+        <label class="auth-form__label" for="login-password">Password</label>
+        <div class="auth-form__password">
+          <input
+            id="login-password"
+            class="auth-form__input"
+            autocomplete="current-password"
+            aria-describedby="login-password-error"
+            [type]="showPassword() ? 'text' : 'password'"
+            [formField]="loginForm.password"
+            [attr.aria-invalid]="loginForm.password().touched() && loginForm.password().invalid()"
+          />
+          <button
+            type="button"
+            class="auth-form__reveal"
+            aria-label="Show password"
+            aria-controls="login-password"
+            [attr.aria-pressed]="showPassword()"
+            (click)="showPassword.set(!showPassword())"
+          >
+            {{ showPassword() ? 'Hide' : 'Show' }}
+          </button>
+        </div>
+        <app-form-field-error id="login-password-error" [field]="loginForm.password" />
+      </div>
+
+      <div class="auth-form__alert" aria-live="polite">
+        @if (serverError(); as error) {
+          <p class="auth-form__error" role="alert">{{ error }}</p>
+        }
+      </div>
+
+      <button
+        type="submit"
+        class="auth-form__submit"
+        [disabled]="pending()"
+        [attr.aria-busy]="pending()"
+      >
+        @if (pending()) {
+          <span class="auth-form__spinner" aria-hidden="true"></span> Signing in…
+        } @else {
+          Sign in
+        }
+      </button>
+    </form>
+
+    <p class="auth-card__switch">New here? <a routerLink="/register">Create an account</a></p>
+
+    @if (isDev) {
+      <p class="auth-card__hint">Demo account: Try Admin / Admin</p>
+    }
+  </section>
+</main>
+<app-toast-outlet />

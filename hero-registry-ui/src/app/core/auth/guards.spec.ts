@@ -8,7 +8,7 @@ import {
   provideRouter,
 } from '@angular/router';
 import { AuthService } from './auth-service';
-import { adminGuard, authGuard } from './guards';
+import { adminGuard, authGuard, guestGuard } from './guards';
 
 describe('guards', () => {
   const isAuthenticated = signal(false);
@@ -71,6 +71,18 @@ describe('guards', () => {
 
     it('sends a signed-out visitor to login with the returnUrl', () => {
       expect(serialized(run(adminGuard, '/users'))).toBe('/login?returnUrl=%2Fusers');
+    });
+  });
+
+  describe('guestGuard (login and register pages)', () => {
+    it('lets a signed-out visitor see the page', () => {
+      expect(run(guestGuard, '/login')).toBe(true);
+    });
+
+    it('sends a signed-in user to the heroes list', () => {
+      isAuthenticated.set(true);
+
+      expect(serialized(run(guestGuard, '/register'))).toBe('/heroes');
     });
   });
 });

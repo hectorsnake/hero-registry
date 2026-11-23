@@ -10,7 +10,7 @@ import { Router, provideRouter } from '@angular/router';
 import { Observable, Subject, firstValueFrom, throwError } from 'rxjs';
 import { ToastService } from '../ui/toast-service';
 import { AuthService } from './auth-service';
-import { SESSION_EXPIRED_MESSAGE, refreshInterceptor } from './refresh-interceptor';
+import { refreshInterceptor } from './refresh-interceptor';
 
 describe('refreshInterceptor', () => {
   let http: HttpClient;
@@ -86,18 +86,18 @@ describe('refreshInterceptor', () => {
     expect(new Set(auth.refresh.mock.results.map((r) => r.value)).size).toBe(1);
   });
 
-  it('when the refresh fails, clears the session and sends the user to login with a returnUrl', async () => {
+  it('when the refresh fails, clears the session and sends the user to login with a returnUrl and reason=expired', async () => {
     auth.refresh.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 401 })));
     const result = firstValueFrom(http.get('/api/heroes'));
     unauthorized('/api/heroes');
 
     await expect(result).rejects.toMatchObject({ status: 401 });
     expect(auth.clearSession).toHaveBeenCalled();
+    // The login page explains why (T13), so there is no toast on top of it.
     expect(router.navigate).toHaveBeenCalledWith(['/login'], {
-      queryParams: { returnUrl: '/heroes?page=2' },
+      queryParams: { returnUrl: '/heroes?page=2', reason: 'expired' },
     });
-    expect(toasts.show).toHaveBeenCalledWith(SESSION_EXPIRED_MESSAGE, 'warning');
-    expect(SESSION_EXPIRED_MESSAGE).toBe('Your session has expired. Please sign in again.');
+    expect(toasts.show).not.toHaveBeenCalled();
   });
 
   it('a retried request that gets 401 again is not retried a second time', async () => {
