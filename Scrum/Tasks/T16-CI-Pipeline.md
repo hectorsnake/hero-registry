@@ -40,6 +40,16 @@ Automatically build and test the back end and front end on every push and pull r
 - **Compose smoke test:** the same calls were run by hand in T15 (`up --wait`, `/health`, login through nginx, the hero count). `jq` is preinstalled on `ubuntu-latest`.
 - **Workflow syntax:** no offline YAML linter was available here, so GitHub validates it on the first run (the Actions tab shows any syntax error immediately).
 
+### First run on GitHub: a convention test failed only in CI (fixed)
+- **Symptom:** `DomainConventionsTests.All_domain_types_live_in_the_Domain_namespace` failed on `ubuntu-latest`, but passed on Windows. It reported the type `Microsoft.CodeCoverage.Instrumentation.Static.Tracker.StaticManagedTrackerTemplate_…`.
+- **Cause:** with `--coverage`, Microsoft's code coverage uses **static instrumentation** on Linux. It rewrites the assembly under test and injects its own tracker type into `HeroRegistry.Domain.dll`. On Windows it instruments dynamically, so the type never appeared locally.
+- **Reproduced on Windows** by forcing the same mode with a coverage settings file (`EnableStaticManagedInstrumentation=True`, `EnableDynamicManagedInstrumentation=False`): the same test failed with the same type.
+- **Fix:** the test ignores types in the `Microsoft.CodeCoverage.` namespace (injected by the tool, not Domain code) and stays strict for everything else.
+- **Verified:**
+  - the Domain tests are green with and without coverage;
+  - a temporary `Elsewhere.MisplacedProbe` type in the Domain project still failed the test, so the rule is intact;
+  - the whole solution in static-instrumentation mode passed 763/763.
+
 ### README
 - A CI badge at the top.
 - A "Continuous integration (GitHub Actions)" section under Testing.
