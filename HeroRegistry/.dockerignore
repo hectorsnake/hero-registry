@@ -28,3 +28,6 @@ README.md
 !.git/config
 !.git/packed-refs
 !.git/refs/heads/**
+# Local test output (coverage, logs). The test projects themselves stay in the context: the API
+# Dockerfile runs the unit tests before publishing.
+**/TestResults

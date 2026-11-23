@@ -350,9 +350,16 @@ docker compose up --build -d
 | ------------ | ------------------------- |
 | Angular UI   | http://localhost:8080     |
 | API          | http://localhost:5080     |
-| SQL Server   | `localhost,14333`         |
+| SQL Server   | `localhost,14333` (this machine only; user `sa`, the `SA_PASSWORD` from `.env`) |
 
 To stop the stack: `docker compose down`. To also remove the database volume: `docker compose down -v`.
+
+- **One command, no SDKs:** both images are multi-stage builds. The API is built with the .NET SDK image and runs on `aspnet:10.0` as the non-root `app` user. The UI is built with `node:22-alpine` and served by `nginx:alpine`.
+- **One origin:** nginx serves the Angular app and proxies `/api` to the API container, so the browser never needs CORS, and the HttpOnly refresh cookie (`Path=/api/auth`) works as in development.
+- **Startup order:** SQL Server → API → UI, each waiting for the previous one's healthcheck. SQL Server is probed with `sqlcmd`, and the API with its anonymous `/health`, which includes the database check. The API then creates the database, applies the migrations and seeds the demo data by itself.
+- **Data:** the database lives in the `sqlserver-data` volume, so it survives `docker compose down` and restarts.
+- **Secrets:** `.env` is git-ignored, and `.env.example` documents every variable. Compose refuses to start when `SA_PASSWORD` or `JWT__KEY` is missing, and the API refuses a JWT key shorter than 32 bytes. Leave `APPLICATIONINSIGHTS_CONNECTION_STRING` empty to disable telemetry.
+- **HTTPS:** the stack serves plain HTTP on `localhost`, where browsers accept the `Secure` refresh cookie. For any other host, put TLS in front of nginx (a reverse proxy or load balancer); without HTTPS the browser drops the `Secure` cookie, and sessions cannot be refreshed.
 
 ### Demo credentials
 

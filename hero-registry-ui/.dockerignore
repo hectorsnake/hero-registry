@@ -1,0 +1,16 @@
+# Keep the build context small and free of local state (T15).
+node_modules
+dist
+.angular
+coverage
+out-tsc
+tmp
+.vscode
+.idea
+.git
+.gitignore
+.env
+.env.*
+npm-debug.log*
+Dockerfile
+.dockerignore

@@ -1,7 +1,11 @@
-# Build context: the HeroRegistry solution folder (one level above src/).
+# HeroRegistry API (T15). Build context: the HeroRegistry solution folder (one level above src/).
 #   docker build -f src/HeroRegistry.Api/Dockerfile -t hero-registry-api .
+#
+# Plain HTTP on 8080 inside the container: TLS ends at the edge (nginx or a load balancer), and the
+# API container is only reachable on the compose network or through the published port.
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
+# The image's built-in non-root user.
 USER $APP_UID
 WORKDIR /app
 EXPOSE 8080
